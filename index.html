@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palak Porwal — Applied AI Engineer</title>
+<meta name="description" content="Applied AI Engineer in Singapore. I take open-ended operational problems, scope them, and ship reliable deployed systems.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0E1E3A; --navy-2:#152A4E; --paper:#F7F5F0; --card:#FFFDF9;
+  --ink:#111827; --soft:#5A6478; --gold:#B08430; --line:#D8D3C8;
+  --line-d:rgba(255,255,255,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);
+  font-family:"Inter Tight",system-ui,sans-serif;font-size:16.5px;line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:0 34px}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+header{position:sticky;top:0;z-index:30;background:var(--navy);color:#fff}
+header .wrap{display:flex;justify-content:space-between;align-items:center;padding:15px 34px}
+header .nm{font-family:"Fraunces",serif;font-weight:500;font-size:16px}
+header nav a{margin-left:26px;font-size:12.5px;letter-spacing:.11em;text-transform:uppercase;
+  text-decoration:none;color:rgba(255,255,255,.72);transition:.15s}
+header nav a:hover{color:var(--gold)}
+
+.hero{background:var(--navy);color:#fff;padding:86px 0 74px}
+.hero h1{font-family:"Fraunces",serif;font-weight:400;font-size:clamp(3.1rem,8vw,5.6rem);
+  letter-spacing:-.03em;line-height:1}
+.hero .role{font-size:13px;letter-spacing:.19em;text-transform:uppercase;color:var(--gold);margin-bottom:26px}
+.hero .lede{font-family:"Fraunces",serif;font-size:clamp(1.28rem,2.4vw,1.68rem);line-height:1.44;
+  color:rgba(255,255,255,.88);max-width:40ch;margin-top:32px}
+.cred{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  margin-top:58px;border-top:1px solid var(--line-d);padding-top:26px;gap:26px}
+.cred b{display:block;font-family:"Fraunces",serif;font-size:25px;font-weight:500}
+.cred span{display:block;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(255,255,255,.55);margin-top:5px}
+
+.now{background:var(--navy-2);color:#fff;padding:30px 0;border-top:1px solid var(--line-d)}
+.now .wrap{display:flex;gap:26px;align-items:baseline;flex-wrap:wrap}
+.now .tag{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.now .body{font-family:"Fraunces",serif;font-size:19px;color:rgba(255,255,255,.9);flex:1;min-width:280px}
+.now .body em{font-style:normal;color:#fff}
+
+.railhead{padding:58px 0 6px;font-size:12px;letter-spacing:.17em;text-transform:uppercase;color:var(--soft)}
+.railsub{font-family:"Fraunces",serif;font-size:23px;padding-bottom:24px;letter-spacing:-.015em}
+
+.row1{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.row2{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:4px;
+  padding:22px 20px 18px;text-decoration:none;color:inherit;display:flex;flex-direction:column;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s,background .18s}
+.c:hover{transform:translateY(-4px);box-shadow:0 20px 40px -26px rgba(14,30,58,.45);border-color:var(--navy)}
+.c .kind{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.c .kind.exp{color:var(--soft)}
+.c .ask{font-family:"Fraunces",serif;font-size:17px;line-height:1.34;flex:1}
+.c .nm{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.c .nm b{font-family:"Fraunces",serif;font-weight:500;font-size:15.5px}
+.c .nm span{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--soft)}
+.c:hover .nm span{color:var(--navy)}
+.row1 .c{min-height:262px}
+.row2 .c{min-height:214px;background:transparent}
+.row2 .c:hover{background:var(--card)}
+
+.proj{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:66px}
+.proj:first-of-type{border-top:1px solid var(--line);margin-top:64px}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.proj h2{font-family:"Fraunces",serif;font-weight:500;font-size:clamp(1.9rem,3.6vw,2.6rem);
+  letter-spacing:-.025em;line-height:1.08}
+.proj .meta{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--soft);white-space:nowrap}
+.proj .live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:#1F9D55;margin-right:7px;vertical-align:middle}
+
+.vid{background:var(--navy);border-radius:3px;overflow:hidden;margin-bottom:26px;
+  box-shadow:0 18px 44px -22px rgba(14,30,58,.55)}
+.vid video{display:block;width:100%;height:auto}
+
+.pgrid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:52px}
+.prob{font-family:"Fraunces",serif;font-size:20px;line-height:1.45}
+.prob .q{display:block;font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--gold);font-family:"Inter Tight",sans-serif;margin-bottom:11px}
+.scope{margin-top:20px;font-size:15.5px;color:var(--soft)}
+.scope b{display:block;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink);font-weight:600;margin-bottom:7px}
+.sol{color:var(--soft);font-size:16px}
+.sol p+p{margin-top:13px}
+.sol strong{color:var(--ink);font-weight:500}
+
+.proof{margin-top:24px;border-left:2px solid var(--navy);padding-left:17px}
+.proof .k{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--navy);display:block;margin-bottom:8px}
+.proof b{font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:500}
+.proof i{font-style:normal;color:var(--soft);font-size:14.5px}
+
+.stack{margin-top:22px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--soft);line-height:1.9}
+.teaser{margin-top:20px;font-size:15px;color:var(--soft);font-style:italic}
+.links{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{font-size:12.5px;letter-spacing:.05em;text-decoration:none;color:var(--navy);
+  border:1px solid var(--navy);padding:8px 16px;transition:.15s;border-radius:2px}
+.links a:hover{background:var(--navy);color:#fff}
+
+.lbl{font-size:12px;letter-spacing:.17em;text-transform:uppercase;color:var(--soft);
+  padding:58px 0 4px;border-bottom:1px solid var(--line)}
+.wr{display:block;text-decoration:none;padding:24px 0;border-bottom:1px solid var(--line)}
+.wr h3{font-family:"Fraunces",serif;font-weight:500;font-size:20px}
+.wr:hover h3{color:var(--gold)}
+.wr p{color:var(--soft);font-size:15px;margin-top:5px}
+
+footer{background:var(--navy);color:#fff;margin-top:70px;padding:52px 0}
+footer .big{font-family:"Fraunces",serif;font-size:clamp(1.6rem,3.4vw,2.3rem);letter-spacing:-.02em}
+footer .l{margin-top:22px;font-family:"JetBrains Mono",monospace;font-size:13.5px;color:rgba(255,255,255,.66)}
+footer .l a{color:#fff;text-decoration:none;border-bottom:1px solid var(--gold);padding-bottom:2px}
+footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
+
+@media(max-width:960px){
+  .row1,.row2{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .wrap{padding:0 22px}
+  header .wrap{padding:14px 22px}
+  header nav a{margin-left:15px;font-size:11.5px}
+  .hero{padding:56px 0 50px}
+  .row1,.row2{grid-template-columns:1fr}
+  .row1 .c,.row2 .c{min-height:0}
+  .pgrid{grid-template-columns:1fr;gap:28px}
+  .cred{gap:20px;margin-top:42px}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .c{transition:none}
+  .c:hover{transform:none}
+}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <span class="nm">Palak Porwal</span>
+  <nav>
+    <a href="#work">Work</a><a href="#writing">Writing</a><a href="mailto:palak002@e.ntu.edu.sg">Contact</a>
+  </nav>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <div class="role">Applied AI Engineer · Singapore</div>
+  <h1>Palak Porwal</h1>
+  <p class="lede">I take open-ended operational problems, scope them into something a system can actually do,
+  and ship it as software people can rely on.</p>
+  <div class="cred">
+    <div><b>4</b><span>Internships across 3 countries</span></div>
+    <div><b>P&amp;G</b><span>Fortune 500 R&amp;D</span></div>
+    <div><b>NTU SaRC</b><span>Satellite research lab</span></div>
+    <div><b>NTU</b><span>Aerospace, May 2025</span></div>
+  </div>
+</div></section>
+
+<section class="now"><div class="wrap">
+  <div class="tag">Currently building</div>
+  <div class="body"><em>DataHub Enterprise Agent</em> — an incident agent that walks a data platform's lineage graph to find what a broken ML pipeline actually took down, and writes its findings back where the next engineer will see them.</div>
+</div></section>
+
+<div class="wrap">
+  <div class="railhead" id="work">Work</div>
+  <div class="railsub">Seven problems, scoped and shipped.</div>
+
+  <div class="row1">
+    <a class="c" href="#sentinel">
+      <div class="kind">Project · live</div>
+      <div class="ask">A shipping lane closes. Procurement can name who ships through it. Who else is exposed, two steps away, through a reroute nobody mapped?</div>
+      <div class="nm"><b>SentinelSCM</b><span>See how →</span></div>
+    </a>
+    <a class="c" href="#aeroops">
+      <div class="kind">Project · live</div>
+      <div class="ask">It's 2am on a turnaround. An engineer needs to know why EGT margin dropped after a turbine swap. The answer spans three manuals.</div>
+      <div class="nm"><b>AeroOps</b><span>See how →</span></div>
+    </a>
+    <a class="c" href="#maintenance">
+      <div class="kind">Project · live API</div>
+      <div class="ask">Compressor servicing runs on a calendar. So you either replace parts that were fine, or find out when the line stops.</div>
+      <div class="nm"><b>MaintenancePilot</b><span>See how →</span></div>
+    </a>
+    <a class="c" href="#fyp">
+      <div class="kind">Project</div>
+      <div class="ask">A sourcing team signs a supplier on price and lead time, then inherits every country risk nobody priced at signing.</div>
+      <div class="nm"><b>Supplier Risk</b><span>See how →</span></div>
+    </a>
+  </div>
+
+  <div class="row2">
+    <a class="c" href="#stealth">
+      <div class="kind exp">AI Engineer · 2025</div>
+      <div class="ask">A financial services firm needed prospect research and outreach at volume, without it reading like a template.</div>
+      <div class="nm"><b>Stealth AI Startup</b><span>See how →</span></div>
+    </a>
+    <a class="c" href="#png">
+      <div class="kind exp">Procter &amp; Gamble · 2025</div>
+      <div class="ask">Ask a search engine for a theme, get ten excellent images that all look the same. The point was range.</div>
+      <div class="nm"><b>Multimodal search</b><span>See how →</span></div>
+    </a>
+    <a class="c" href="#sarc">
+      <div class="kind exp">NTU SaRC · 2024</div>
+      <div class="ask">A satellite operations team pulled tracking and space weather data by hand, from three sources, every day, before any analysis could start.</div>
+      <div class="nm"><b>Ground station automation</b><span>See how →</span></div>
+    </a>
+    <a class="c" href="#rfa">
+      <div class="kind exp">Rocket Factory Augsburg · 2023</div>
+      <div class="ask">A telemetry team monitored its systems by hand, and a launch programme's milestones lived across separate teams.</div>
+      <div class="nm"><b>Launch tooling</b><span>See how →</span></div>
+    </a>
+  </div>
+
+  <article class="proj" id="sentinel">
+    <div class="phead">
+      <h2>SentinelSCM</h2>
+      <div class="meta live">Live · multi-agent · 2026</div>
+    </div>
+    <div class="vid">
+      <video src="media/sentinel.mp4" poster="media/sentinel.jpg" muted loop playsinline preload="none" controls></video>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          When a shipping lane closes, procurement can name the suppliers who ship through it.
+          The expensive ones are the suppliers nobody names, connected two steps away through a reroute
+          and discovered when the material fails to arrive.</div>
+        <div class="scope"><b>How I scoped it</b>
+          "Handle supply chain disruption" is unbuildable. I narrowed it to one answerable question —
+          given a live news event, which suppliers are affected, including indirectly — and made the
+          system defend its answer with an evidence chain a human signs off on.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>8 of 8</b> <i>affected suppliers found on a compound Red Sea and QatarEnergy disruption.
+          A single-agent baseline, given identical information, found 3.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>Five specialist agents reason over a live digital twin of the supply network in Neo4j: monitoring,
+        risk, planning, finance, and an operations manager that arbitrates between them.</p>
+        <p>It ingests real news as it breaks and traces the disruption through the graph to indirect exposure.
+        <strong>Nothing executes without human approval</strong> — the system stops and presents its evidence chain first.</p>
+        <div class="stack">LangGraph · Neo4j · FastMCP · Qwen · React · Alibaba Cloud</div>
+        <p class="teaser">I've written up how the agent society was evaluated against a single-agent baseline,
+        and where the gap actually opens.</p>
+        <div class="links">
+          <a href="http://47.82.152.175:3000">Live demo</a>
+          <a href="https://github.com/palakpwl07/sentinel-scm">Code</a>
+          <a href="https://aiintherealworld.substack.com/p/building-sentinelscm-a-supply-chain">Read the write-up</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="proj" id="aeroops">
+    <div class="phead">
+      <h2>AeroOps</h2>
+      <div class="meta live">Live · knowledge graph · 2026</div>
+    </div>
+    <div class="vid">
+      <video src="media/aeroops.mp4" poster="media/aeroops.jpg" muted loop playsinline preload="none" controls></video>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          A line engineer asks why exhaust gas temperature margin dropped after a turbine swap.
+          Document search returns the page that mentions EGT. The answer lives across three documents,
+          and nobody assembles it at 2am on a turnaround.</div>
+        <div class="scope"><b>How I scoped it</b>
+          The useful question wasn't "can it search manuals" but "can it follow a cause." I built a
+          35-question benchmark from real maintenance reasoning first, then designed the system against it,
+          so the weak categories were visible before anything shipped.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>Answers, or admits it can't</b> <i>Conventional retrieval declined 11 of 35 benchmark questions,
+          including 3 of 5 real operational scenarios. This answered all 35, every claim traced to its source page.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>A knowledge graph of 267 components, failure modes and procedures extracted from seven NASA, FAA and
+        operator sources, so the system follows a causal chain instead of matching keywords.</p>
+        <p>Built for maintenance reality: <strong>every claim carries its document, chunk and page</strong>, because an
+        engineer acting on it has to check it against the manual.</p>
+        <div class="stack">Neo4j · LangGraph · FAISS · BM25 · Groq · Streamlit</div>
+        <div class="links">
+          <a href="https://aeroopsrag.streamlit.app">Live demo</a>
+          <a href="https://github.com/palakpwl07/AeroOps">Code</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="proj" id="maintenance">
+    <div class="phead">
+      <h2>MaintenancePilot</h2>
+      <div class="meta live">Live API · production ML · 2026</div>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          Compressor maintenance runs on a calendar, so operators either service equipment that was fine
+          or discover the failure when the line stops. On a metro fleet that is a service outage,
+          not a maintenance ticket.</div>
+        <div class="scope"><b>How I scoped it</b>
+          The modelling question was easy to get wrong. A missed failure and a false alarm are not equally
+          bad, so the threshold is set by what each actually costs, and evaluation runs on time-ordered
+          splits because random ones let the model see the future.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>Catches 99.5% of failures</b> <i>with the alert threshold set by what a miss actually costs
+          rather than a default. Trained on 1.5 million rows of real compressor telemetry across four documented failures.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>The failure signature turned out to be behavioural, not a threshold breach: the compressor stops
+        cycling and begins running continuously, hours before anything reads as out of range.</p>
+        <p>Deployed as a live API with <strong>automated drift monitoring that fails the build</strong> rather than
+        filing a report, because a maintenance model degrading silently is worse than none.</p>
+        <div class="stack">LightGBM · Optuna · MLflow · FastAPI · Docker · Evidently · GCP Cloud Run</div>
+        <div class="links">
+          <a href="https://maintenancepilot-395994505246.asia-southeast1.run.app/docs">Live API</a>
+          <a href="https://github.com/palakpwl07/MaintenancePilot">Code</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="proj" id="fyp">
+    <div class="phead">
+      <h2>Supplier Risk Assessment</h2>
+      <div class="meta">Final year project · NTU · 2025</div>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          Sourcing teams commit to suppliers on price and lead time, then absorb the country risk,
+          disaster exposure and infrastructure fragility nobody priced in at signing.</div>
+        <div class="scope"><b>How I scoped it</b>
+          Risk is only useful if a buyer can act on it, so the deliverable was a decision tool with
+          scenario simulation rather than a score. This is the problem SentinelSCM returns to a year later,
+          with agents and a live graph instead of a static model.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>R² 0.91</b> <i>on supplier risk scoring, with scenario simulation so a buyer can test a decision
+          before committing to it.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>A stacked ensemble of Random Forest, Gradient Boosting and LSTM base learners with a Ridge
+        meta-learner, delivered as a decision tool with country-level risk mapping and supplier scenario
+        simulation rather than a score in a spreadsheet.</p>
+        <div class="stack">Random Forest · Gradient Boosting · LSTM · Ridge · Streamlit</div>
+        <div class="links"><a href="https://github.com/palakpwl07/SupplyChainRisk_FYP">Code</a></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="proj" id="stealth">
+    <div class="phead">
+      <h2>Lead research and outreach agent</h2>
+      <div class="meta">AI Engineer · stealth AI startup · Jul – Dec 2025</div>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          A mid-sized financial services firm needed prospect research and personalised outreach at volume.
+          Done by hand it doesn't scale; done generically it stops working.</div>
+        <div class="scope"><b>How I scoped it</b>
+          Alongside the build I ran pilot evaluations and discovery conversations with several companies,
+          which is where the scoping actually happens: working out which parts of a workflow an agent
+          handles well and which parts should stay with a person.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>50-60% less manual effort</b> <i>on prospecting and analysis, measured against a timed baseline
+          of the existing process rather than estimated.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>A production lead-scraping and personalised-outreach agent, deployed for the client and built
+        on LangChain and LangGraph over OpenAI models.</p>
+        <p>Also prototyped agentic and RAG systems across several other business workflows.
+        My first production agent, and the reason the projects that followed were built around
+        <strong>evaluation and human approval gates</strong> from the start rather than bolted on after.</p>
+        <div class="stack">LangChain · LangGraph · OpenAI · Python</div>
+      </div>
+    </div>
+  </article>
+
+  <article class="proj" id="png">
+    <div class="phead">
+      <h2>Multimodal search evaluation</h2>
+      <div class="meta">Associate Scientist Intern · P&amp;G Data &amp; Modelling Sciences · Jan – Jun 2025</div>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          A text-to-image search engine over 50,000 images was built to give researchers a wide visual
+          range for a theme. Ask it for a theme and it returned ten excellent results that all looked
+          like the same photograph.</div>
+        <div class="scope"><b>How I scoped it</b>
+          The standard metrics said the system was fine, and they were right about relevance and wrong
+          about the product. Since the whole premise was personal interpretation, I defined three metrics
+          around what a researcher would actually notice — relevance, diversity, and palette — and
+          benchmarked four retrieval configurations against them.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>Framework, not a fix</b> <i>Shipped the evaluation framework alongside the recommendation, so
+          the team could re-run the comparison as the image set grew. Roughly two seconds a query at 50,000 images.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>Two more systems in the same six months: a <strong>colour correction pipeline</strong> for the VISIA CRP
+        skin-imaging platform, with YOLO-NAS chip detection at mAP@0.5 of 90.4% and RGB to LAB modelling
+        validated against spectrophotometer ground truth. And an auto-tagging pipeline that classified
+        10,000+ scalp images by clustering CLIP embeddings, cutting manual tagging effort by around 80%.</p>
+        <p>Presented results and design trade-offs in <strong>bi-weekly reviews to stakeholders across the US
+        and China</strong>, where the job was turning technical findings into decisions.</p>
+        <div class="stack">CLIP · FAISS · HNSW · MMR · YOLO-NAS · NLLB · colour histograms</div>
+        <p class="teaser">I've written up how the evaluation framework was designed, and why the obvious
+        metrics pointed the wrong way.</p>
+        <div class="links"><a href="https://aiintherealworld.substack.com/p/your-ai-feature-has-great-metrics">Read the write-up</a></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="proj" id="sarc">
+    <div class="phead">
+      <h2>Ground station automation</h2>
+      <div class="meta">ML Engineering Intern · NTU Satellite Research Centre · Jan – May 2024</div>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          Satellite operations depend on tracking elements and space weather that live across three
+          separate providers. Pulling them by hand every day is slow, error-prone, and has to happen
+          before anyone can forecast anything.</div>
+        <div class="scope"><b>How I scoped it</b>
+          The forecast was the visible ask, but it was useless without a reliable feed underneath it.
+          So the work split into three: an API over the satellite data sources, a space weather database
+          on a daily schedule, and the ensemble model on top of both.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>Pipeline, then model</b> <i>Automated ingestion from three providers into a maintained database,
+          with forecasting on top. Normalized RMSE 0.15 on sunspot number across 50,000+ observations.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>A FastAPI service that fetches and processes satellite tracking data and TLEs from
+        <strong>Celestrak, SatNOGS and Space-Track</strong>, alongside scheduled collection of both observed
+        and predicted space weather into a maintained database.</p>
+        <p>On top of that, an ensemble forecasting solar activity, combining LSTM, Prophet and gradient
+        boosting models to predict F10.7 solar flux, the driver behind satellite drag and communication
+        blackouts.</p>
+        <div class="stack">FastAPI · Kubernetes · LSTM · Prophet · Gradient Boosting · Celestrak / SatNOGS / Space-Track</div>
+        <div class="links"><a href="https://github.com/palakpwl07/Ground-Station-Automation">Code</a></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="proj" id="rfa">
+    <div class="phead">
+      <h2>Telemetry and launch planning tooling</h2>
+      <div class="meta">Engineering Intern · Rocket Factory Augsburg · Jan – Jun 2023</div>
+    </div>
+    <div class="pgrid">
+      <div>
+        <div class="prob"><span class="q">The problem</span>
+          The telemetry team monitored its systems by hand. Separately, the RFA One launch programme's
+          test campaigns and milestones lived across several engineering teams with no single view.</div>
+        <div class="scope"><b>How I scoped it</b>
+          Both problems were coordination rather than analysis, so the useful output was tooling people
+          would open every day, not a report. My first experience of building software inside an
+          engineering organisation rather than for a course.</div>
+        <div class="proof">
+          <span class="k">What it does differently</span>
+          <b>Replaced manual monitoring</b> <i>The visualisation tool took over workflows the telemetry team
+          had been doing by hand, and stayed in daily use.</i>
+        </div>
+      </div>
+      <div class="sol">
+        <p>Built a telemetry visualisation tool in Dash, Plotly and Selenium for the avionics team at a
+        European launch vehicle company.</p>
+        <p>Coordinated the <strong>RFA One integrated launch plan</strong> across multiple engineering teams,
+        covering test campaigns and milestone tracking in Microsoft Project and GNC tooling.</p>
+        <div class="stack">Dash · Plotly · Selenium · Microsoft Project</div>
+      </div>
+    </div>
+  </article>
+
+  <div class="lbl" id="writing">Writing</div>
+
+  <a class="wr" href="https://aiintherealworld.substack.com/p/your-ai-feature-has-great-metrics">
+    <h3>Your AI feature has great metrics. It's still failing your users.</h3>
+    <p>What to do when no standard metric measures the thing your product actually promises.</p>
+  </a>
+  <a class="wr" href="https://aiintherealworld.substack.com/p/building-sentinelscm-a-supply-chain">
+    <h3>Building SentinelSCM</h3>
+    <p>A multi-agent supply chain control tower, and how to prove five agents beat one.</p>
+  </a>
+
+</div>
+
+<footer><div class="wrap">
+  <div class="big">Open to AI engineering, applied AI and data science roles in Singapore.</div>
+  <div class="l">
+    <a href="mailto:palak002@e.ntu.edu.sg">palak002@e.ntu.edu.sg</a><span>·</span>
+    <a href="https://github.com/palakpwl07">GitHub</a><span>·</span>
+    <a href="https://aiintherealworld.substack.com">Substack</a>
+  </div>
+</div></footer>
+
+</body>
+</html>
