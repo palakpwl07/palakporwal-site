@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Palak Porwal — Applied AI Engineer</title>
 <meta name="description" content="Applied AI Engineer in Singapore. I take open-ended operational problems, scope them, and ship reliable deployed systems.">
+<link rel="canonical" href="https://palakporwal.site/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://palakporwal.site/">
+<meta property="og:title" content="Palak Porwal — Applied AI Engineer">
+<meta property="og:description" content="I take open-ended operational problems, scope them into something a system can actually do, and ship it as software people can rely on.">
+<meta property="og:image" content="https://palakporwal.site/media/sentinel-architecture.jpg">
+<meta property="og:image:width" content="1536">
+<meta property="og:image:height" content="1024">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Palak Porwal — Applied AI Engineer">
+<meta name="twitter:description" content="I take open-ended operational problems, scope them into something a system can actually do, and ship it as software people can rely on.">
+<meta name="twitter:image" content="https://palakporwal.site/media/sentinel-architecture.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230E1E3A'/%3E%3Ctext x='50' y='50' font-family='Georgia,serif' font-size='58' fill='%23F7F5F0' text-anchor='middle' dominant-baseline='central'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -100,6 +113,20 @@ header nav a:hover{color:var(--gold)}
 .proof i{font-style:normal;color:var(--soft);font-size:14.5px}
 
 .stack{margin-top:22px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--soft);line-height:1.9}
+figure.arch{margin-top:34px;border-top:1px solid var(--line);padding-top:28px}
+figure.arch a{display:block;background:#fff;border:1px solid var(--line);border-radius:3px;
+  overflow:hidden;transition:border-color .18s,box-shadow .18s}
+figure.arch a:hover{border-color:var(--navy);box-shadow:0 18px 40px -26px rgba(14,30,58,.4)}
+figure.arch img{display:block;width:100%;height:auto}
+figure.arch figcaption{margin-top:14px;display:flex;justify-content:space-between;
+  gap:18px;flex-wrap:wrap;align-items:baseline}
+figure.arch .flow{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--soft);line-height:1.8}
+figure.arch .flow b{color:var(--ink);font-weight:500}
+figure.arch .expand{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--navy);
+  white-space:nowrap;border-bottom:1px solid var(--gold);padding-bottom:2px}
+.avail{margin-top:22px;font-size:14px;color:rgba(255,255,255,.62);
+  font-family:"JetBrains Mono",monospace}
+.avail b{color:var(--gold);font-weight:400}
 .teaser{margin-top:20px;font-size:15px;color:var(--soft);font-style:italic}
 .links{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
 .links a{font-size:12.5px;letter-spacing:.05em;text-decoration:none;color:var(--navy);
@@ -144,7 +171,7 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
 <header><div class="wrap">
   <span class="nm">Palak Porwal</span>
   <nav>
-    <a href="#work">Work</a><a href="#writing">Writing</a><a href="mailto:palak002@e.ntu.edu.sg">Contact</a>
+    <a href="#work">Work</a><a href="#writing">Writing</a><a href="https://www.linkedin.com/in/palak-porwal263/">LinkedIn</a><a href="mailto:palak002@e.ntu.edu.sg">Contact</a>
   </nav>
 </div></header>
 
@@ -153,6 +180,7 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
   <h1>Palak Porwal</h1>
   <p class="lede">I take open-ended operational problems, scope them into something a system can actually do,
   and ship it as software people can rely on.</p>
+  <p class="avail"><b>Available now</b> · AI engineering, applied AI and data science roles in Singapore</p>
   <div class="cred">
     <div><b>4</b><span>Internships across 3 countries</span></div>
     <div><b>P&amp;G</b><span>Fortune 500 R&amp;D</span></div>
@@ -255,6 +283,15 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
         </div>
       </div>
     </div>
+    <figure class="arch">
+      <a href="media/sentinel-architecture.jpg" target="_blank" rel="noopener">
+        <img src="media/sentinel-architecture.jpg" alt="SentinelSCM system architecture: event ingestion and live web search feed a LangGraph agent society of monitoring, risk, planning, finance and operations manager agents, grounded by an MCP tool layer and a Neo4j supply chain digital twin, with a human approval gate before any decision is recorded.">
+      </a>
+      <figcaption>
+        <span class="flow"><b>Live disruption intelligence</b> → <b>graph-grounded agent society</b> → <b>financially evaluated mitigation</b> → <b>human approval</b></span>
+        <span class="expand">Open full size ↗</span>
+      </figcaption>
+    </figure>
   </article>
 
   <article class="proj" id="aeroops">
@@ -509,6 +546,7 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
   <div class="big">Open to AI engineering, applied AI and data science roles in Singapore.</div>
   <div class="l">
     <a href="mailto:palak002@e.ntu.edu.sg">palak002@e.ntu.edu.sg</a><span>·</span>
+    <a href="https://www.linkedin.com/in/palak-porwal263/">LinkedIn</a><span>·</span>
     <a href="https://github.com/palakpwl07">GitHub</a><span>·</span>
     <a href="https://aiintherealworld.substack.com">Substack</a>
   </div>
