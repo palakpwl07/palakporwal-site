@@ -608,14 +608,13 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
     <div class="pgrid">
       <div>
         <div class="prob"><span class="q">The problem</span>
-          A wafer lot fails final test. 590 process sensors were recording while it was made, and a process
-          engineer has an afternoon to work out which of them to look at. Without a ranking they check the
-          handful they always check, or they trawl everything.</div>
+          A wafer lot fails final test. 590 sensors were recording while it was made, and an engineer has an
+          afternoon to work out which mattered. Without a ranking they check the usual handful, or trawl
+          everything.</div>
         <div class="scope"><b>How I scoped it</b>
-          The obvious build is a failure classifier. I didn't build one, because a model that predicts
-          failure still doesn't tell an engineer where to look, and with 104 failures against 590 features it
-          would overfit invisibly — predicting "pass" every time is already 93% accurate. The useful
-          deliverable is a triage list, and the hard part is making that list short enough to trust.</div>
+          The obvious build is a failure classifier. I didn't build one: predicting failure doesn't say where
+          to look, and with 104 failures in 590 features, predicting "pass" every time is already 93% accurate.
+          The real deliverable is a triage list short enough to trust.</div>
         <div class="proof">
           <span class="k">What it does differently</span>
           <b>80 → 9</b> <i>A conventional screen at p&lt;0.05 flags 80 sensors. Correcting for 464 simultaneous
@@ -624,21 +623,15 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
         </div>
       </div>
       <div class="sol">
-        <p>SQL-first analysis of the UCI SECOM dataset. Postgres holds 924,530 readings in long format and does
-        the profiling and group statistics; Python handles the correction step; the findings ship as an
-        interactive brief. <strong>No model, by design.</strong></p>
-        <p>Two structural findings came out of reading query output rather than from the statistics.
-        <strong>122 sensors reported the same value on all 1,567 runs</strong> across three months. And every
-        sensor with missing data belongs to one of 35 families sharing an identical missingness fingerprint,
-        which means the gaps are a property of the run rather than of the instrument: those measurements are
-        conditional, not neglected. That reversed the recommendation I had drafted for them.</p>
-        <p>The reduce-monitoring recommendations rest only on structural facts, never on a sensor failing a
-        significance test. <strong>A wrong entry on the shortlist costs an engineer an hour; a sensor wrongly
-        cut from monitoring stops producing the data that would reveal the mistake.</strong> The errors are not
-        symmetric, so the irreversible one is never made on inferential grounds.</p>
+        <p>The structure was the finding. <strong>122 sensors reported one value across all 1,567 runs</strong>,
+        and every sensor with gaps belongs to one of 35 identical missingness families: conditional
+        measurements, not neglected ones.</p>
+        <p>So reduce-monitoring calls rest on structure alone, never on a failed significance test.
+        <strong>A wrong shortlist entry costs an engineer an hour; a sensor wrongly cut stops producing the data
+        that would reveal it.</strong></p>
         <div class="stack">PostgreSQL · SQL · Polars · SciPy · Plotly · Docker</div>
         <div class="links">
-          <a href="secom_dashboard/index.html" target="_blank" rel="noopener">Dashboard</a>
+          <a href="secom_dashboard/index.html" target="_blank" rel="noopener">Findings</a>
           <a href="https://github.com/palakpwl07/secom-signal-triage">Code</a>
         </div>
       </div>
