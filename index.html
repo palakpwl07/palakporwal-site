@@ -396,10 +396,10 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
       </a>
       <a class="c" href="#secom" data-project="secom" data-industry="manufacturing" data-cap="data">
         <span class="cap-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V11.5M12 20V4.5M18 20V14.5"/><path d="M4.5 20h15"/></svg></span>
-        <div class="kind soon">Shipping soon</div>
-        <div class="ask">Every wafer carries hundreds of sensor readings, but a failing lot only shows up at final test — after the cost is already sunk.</div>
-        <div class="tags"><span class="tag ind">Manufacturing</span><span class="tag">Tableau</span></div>
-        <div class="nm"><b>Secom Yield</b><span class="go">Open <i class="arw">→</i></span></div>
+        <div class="kind">Project · live</div>
+        <div class="ask">A lot fails. 590 sensors were watching. A standard screen says 80 of them are worth checking, and most of that list is noise.</div>
+        <div class="tags"><span class="tag ind">Semiconductor</span><span class="tag">SQL &amp; statistics</span></div>
+        <div class="nm"><b>SECOM Signal Triage</b><span class="go">Open <i class="arw">→</i></span></div>
       </a>
       <a class="c" href="#fyp" data-project="fyp" data-industry="supply-chain" data-cap="ml">
         <span class="cap-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17.5c3.2-.5 4.5-9 8.5-9 3.5 0 4 5 7.5 4"/><circle cx="4" cy="17.5" r="1.2"/><circle cx="20" cy="12.5" r="1.2"/></svg></span>
@@ -600,39 +600,52 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
     </div>
   </article>
 
-  <!-- SECOM: replace the .embed-ph block with your Tableau Public embed when the dashboard ships,
-       and update the proof line with the real headline finding. -->
   <article class="proj" id="secom">
     <div class="phead">
-      <h2>Secom Yield</h2>
-      <div class="meta">Manufacturing · Tableau · shipping soon</div>
+      <h2>SECOM Signal Triage</h2>
+      <div class="meta">Semiconductor · SQL &amp; statistics · 2026</div>
     </div>
     <div class="pgrid">
       <div>
         <div class="prob"><span class="q">The problem</span>
-          A semiconductor line runs hundreds of sensors on every wafer, but most process failures only
-          surface at final test, once the value has already been added. The signal that a lot is drifting
-          is buried in 590 correlated sensor traces, most of which are noise.</div>
+          A wafer lot fails final test. 590 process sensors were recording while it was made, and a process
+          engineer has an afternoon to work out which of them to look at. Without a ranking they check the
+          handful they always check, or they trawl everything.</div>
         <div class="scope"><b>How I scoped it</b>
-          Pass and fail are wildly imbalanced — almost everything passes — so accuracy is the wrong target
-          and a dashboard full of models is the wrong deliverable. The useful output is something a process
-          engineer reads on the line: which sensors move before a failure, and which lots to look at now.</div>
+          The obvious build is a failure classifier. I didn't build one, because a model that predicts
+          failure still doesn't tell an engineer where to look, and with 104 failures against 590 features it
+          would overfit invisibly — predicting "pass" every time is already 93% accurate. The useful
+          deliverable is a triage list, and the hard part is making that list short enough to trust.</div>
         <div class="proof">
           <span class="k">What it does differently</span>
-          <b>Shipping soon</b> <i>The Tableau dashboard, and the write-up on feature selection under heavy
-          class imbalance, are in progress — the live link will land here.</i>
+          <b>80 → 9</b> <i>A conventional screen at p&lt;0.05 flags 80 sensors. Correcting for 464 simultaneous
+          tests leaves 33, grouping near-duplicate channels leaves 26, and requiring the effect to survive the
+          process changing mid-record leaves 9. The gap is the finding, not the 9.</i>
         </div>
       </div>
       <div class="sol">
-        <p>A yield-analysis dashboard over the SECOM semiconductor manufacturing dataset, built to turn 590
-        raw sensor features into a short list an engineer can actually act on.</p>
-        <div class="embed-ph" aria-hidden="true"><span>Tableau dashboard — coming soon</span></div>
-        <div class="stack">Tableau · Python · scikit-learn · feature selection</div>
+        <p>SQL-first analysis of the UCI SECOM dataset. Postgres holds 924,530 readings in long format and does
+        the profiling and group statistics; Python handles the correction step; the findings ship as an
+        interactive brief. <strong>No model, by design.</strong></p>
+        <p>Two structural findings came out of reading query output rather than from the statistics.
+        <strong>122 sensors reported the same value on all 1,567 runs</strong> across three months. And every
+        sensor with missing data belongs to one of 35 families sharing an identical missingness fingerprint,
+        which means the gaps are a property of the run rather than of the instrument: those measurements are
+        conditional, not neglected. That reversed the recommendation I had drafted for them.</p>
+        <p>The reduce-monitoring recommendations rest only on structural facts, never on a sensor failing a
+        significance test. <strong>A wrong entry on the shortlist costs an engineer an hour; a sensor wrongly
+        cut from monitoring stops producing the data that would reveal the mistake.</strong> The errors are not
+        symmetric, so the irreversible one is never made on inferential grounds.</p>
+        <div class="stack">PostgreSQL · SQL · Polars · SciPy · Plotly · Docker</div>
+        <div class="links">
+          <a href="secom_dashboard/index.html" target="_blank" rel="noopener">Dashboard</a>
+          <a href="https://github.com/palakpwl07/secom-signal-triage">Code</a>
+        </div>
       </div>
     </div>
   </article>
 
-  <article class="proj" id="fyp">
+<article class="proj" id="fyp">
     <div class="phead">
       <h2>Supplier Risk Assessment</h2>
       <div class="meta">Final year project · NTU · 2025</div>
