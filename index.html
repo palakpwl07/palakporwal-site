@@ -13,6 +13,10 @@
   gtag('js', new Date());
   gtag('config', 'G-JHS57C1QXY');
 </script>
+<script>
+  /* lightweight GA4 event helper — silently no-ops if gtag is blocked or absent */
+  window.__track = function(name, params){ try{ if(typeof gtag==='function') gtag('event', name, params||{}); }catch(e){} };
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1077,6 +1081,7 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
   function isProject(id){ var el = document.getElementById(id); return el && el.classList.contains('proj'); }
   function openProject(id, skipPush){
     var src = document.getElementById(id); if(!src || !src.classList.contains('proj')) return;
+    var _h = src.querySelector('h2'); if(window.__track) __track('project_open', {project_name: _h ? _h.textContent.trim() : id, project_id: id});
     modalBody.innerHTML = '';
     var clone = src.cloneNode(true); clone.removeAttribute('id');
     modalBody.appendChild(clone);
@@ -1136,7 +1141,7 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
   INDUSTRIES.forEach(function(i){ commands.push({k:'Industry', t:i.label, s:'Filter work', kw:('filter '+i.label).toLowerCase(),
     act:function(){ state.ind=i.val; applyFilter(true); jumpTo('#work'); }}); });
   commands.push({k:'Action', t:'Clear all filters', s:'Show every project', kw:'reset clear all', act:function(){ resetFilters(); jumpTo('#work'); }});
-  commands.push({k:'Link', t:'Email Palak', s:'palak002@e.ntu.edu.sg', kw:'email contact mail', act:function(){ location.href='mailto:palak002@e.ntu.edu.sg'; }});
+  commands.push({k:'Link', t:'Email Palak', s:'palak002@e.ntu.edu.sg', kw:'email contact mail', act:function(){ if(window.__track) __track('contact_click', {method:'email'}); location.href='mailto:palak002@e.ntu.edu.sg'; }});
   commands.push({k:'Link', t:'GitHub', s:'github.com/palakpwl07', kw:'github code repo', act:function(){ window.open('https://github.com/palakpwl07','_blank'); }});
   commands.push({k:'Link', t:'Substack', s:'aiintherealworld.substack.com', kw:'writing blog substack', act:function(){ window.open('https://aiintherealworld.substack.com','_blank'); }});
   commands.push({k:'Nav', t:'Back to top', s:'', kw:'top home hero', act:function(){ jumpTo('#top'); }});
@@ -1193,6 +1198,20 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
 
   // open a project if the page loads with #project in the URL
   (function initHash(){ var id = location.hash.slice(1); if(id && isProject(id)) openProject(id, true); })();
+
+  // ---- analytics: project outbound links + contact ----
+  document.body.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('a[href]') : null; if(!a) return;
+    var href = a.getAttribute('href') || '';
+    if(href.indexOf('mailto:') === 0){ if(window.__track) __track('contact_click', {method:'email'}); return; }
+    if(!a.closest('.links')) return;                 // only the project link rows
+    var proj = a.closest('.proj'), h2 = proj ? proj.querySelector('h2') : null;
+    if(window.__track) __track('project_link_click', {
+      project_name: h2 ? h2.textContent.trim() : '',
+      link_label: (a.textContent || '').trim(),
+      link_url: a.href
+    });
+  }, true);
 
   // let the companion open projects
   window.__openProject = function(id){ if(isProject(id)) openProject(id); };
@@ -1264,6 +1283,8 @@ footer .l span{margin:0 12px;color:rgba(255,255,255,.3)}
   if(!rm){ applyEyes(); setInterval(function(){ if(!napping && Math.random()<.6) blink(); }, 3600); }
 
   think.addEventListener('click', function(e){ e.stopPropagation(); if(!cur || cur.a==='charm') return; var a=cur.a;
+    var dest = a==='link' ? 'writeup' : a==='contact' ? 'contact' : (a.indexOf('p:')===0 ? 'project:'+a.slice(2) : a);
+    if(window.__track) __track('bot_bubble_click', {destination: dest});
     if(a==='link') window.open(SUB,'_blank');
     else if(a==='contact') location.href=MAIL;
     else if(a.indexOf('p:')===0){ if(window.__openProject) window.__openProject(a.slice(2)); else location.hash='#'+a.slice(2); }
