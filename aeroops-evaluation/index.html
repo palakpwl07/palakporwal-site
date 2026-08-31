@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeroOps — Evaluation Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F5F0;
+    --ink:#1A1D1F;
+    --steel:#3D4A52;
+    --amber:#C4941F;
+    --signal:#8B3A3A;
+    --rule:#DCD5C4;
+    --rule-strong:#C9C0AA;
+    --paper-raised:#FCFBF8;
+    --green:#4C6B4F;
+    /* Text/graphic-safe amber: original --amber (2.54:1 on paper) fails WCAG AA
+       even at large-text size. This passes 4.5:1+ on both paper surfaces while
+       staying visibly the same gold/amber hue -- use for any amber TEXT or
+       small meaningful graphic (dots, icons); keep --amber for large fills/
+       borders where the contrast requirement doesn't apply the same way. */
+    --amber-ink:#8A6510;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Times New Roman',Times,Georgia,serif;
+    font-size:17px;
+    line-height:1.5;
+  }
+  h1,h2,h3{
+    font-family:'Times New Roman',Times,Georgia,serif;
+    font-weight:700;
+    margin:0 0 .3em 0;
+    letter-spacing:0;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:var(--steel);}
+  .layout{
+    display:grid;
+    grid-template-columns:220px minmax(0,880px);
+    justify-content:center;
+    gap:0 64px;
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  /* ---- nav rail ---- */
+  nav{
+    position:sticky;
+    top:48px;
+    align-self:start;
+    padding-top:120px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  nav a{
+    text-decoration:none;
+    color:var(--steel);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:0.02em;
+    padding:10px 8px 10px 14px;
+    border-left:2px solid var(--rule);
+    transition:border-color .15s ease, color .15s ease;
+  }
+  nav a:hover{color:var(--ink);border-left-color:var(--steel);}
+  nav a.active{color:var(--ink);border-left-color:var(--amber);font-weight:500;}
+  nav a:focus-visible{outline:2px solid var(--steel);outline-offset:2px;}
+  .skip-link{
+    position:absolute;left:-9999px;top:0;
+    background:var(--ink);color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;font-size:13px;
+    padding:10px 16px;z-index:100;
+  }
+  .skip-link:focus{left:12px;top:12px;}
+
+  /* ---- hero ---- */
+  header.hero{
+    padding:96px 0 56px 0;
+    max-width:880px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--steel);
+    margin-bottom:18px;
+  }
+  header.hero h1{
+    font-size:44px;
+    line-height:1.12;
+    max-width:11.5em;
+  }
+  header.hero .sub{
+    font-size:17px;
+    color:var(--steel);
+    max-width:34em;
+    margin-top:18px;
+  }
+  .hero-stats{
+    display:flex;
+    gap:40px;
+    margin-top:40px;
+    flex-wrap:wrap;
+  }
+  .hero-stat .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:30px;
+    font-weight:500;
+    color:var(--amber-ink);
+  }
+  .hero-stat .lbl{
+    font-size:12.5px;
+    color:var(--steel);
+    margin-top:2px;
+  }
+
+  section{
+    padding:44px 0;
+    border-top:1px solid var(--rule);
+    max-width:880px;
+  }
+  section:first-of-type{border-top:none;}
+  /* Every section's own trailing content (.callout, .diagram, .example,
+     .status-strip, etc) previously carried its own ad-hoc bottom margin,
+     so the effective gap before the next section ranged 64-100px
+     depending on what happened to end that section. One rule, one
+     number: the 64px section padding is the only thing that controls
+     the gap now. */
+  section > *:last-child{margin-bottom:0;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:28px;
+  }
+  .section-head h2{font-size:26px;}
+  .section-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--steel);
+    white-space:nowrap;
+  }
+  p{max-width:66ch;}
+  .lede{font-size:16.5px;color:#2B2E30;}
+
+  /* ---- diagram box ---- */
+  .diagram{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:28px 24px;
+    margin:24px 0;
+  }
+  .diagram svg{display:block;width:100%;height:auto;}
+  .diagram .cap{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--steel);
+    margin-top:12px;
+  }
+
+  /* ---- caveat / callout ---- */
+  .callout{
+    border-left:2px solid var(--amber);
+    padding:12px 18px;
+    background:rgba(196,148,31,0.06);
+    font-size:14.5px;
+    color:var(--steel);
+    margin:20px 0;
+    max-width:64ch;
+  }
+  .callout.limit{border-left-color:var(--signal);background:rgba(139,58,58,0.05);}
+
+  /* ---- pipeline diagram (section 1) ----
+     Grid, not flex-wrap: a 4-step sequence needs deterministic layout.
+     flex-wrap silently reflowed the 4th node onto a new row with no
+     connecting arrow whenever the four (very unequal-width) nodes didn't
+     fit one line -- viewport-width-dependent breakage. Equal-width grid
+     columns fix the "uneven box sizes" look too; if it still doesn't fit
+     a narrow screen, .pipeline-wrap scrolls horizontally instead of
+     wrapping into a broken second row -- same convention already used
+     for the heatmap table and the mobile nav strip. */
+  .pipeline-wrap{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:28px 24px;
+    margin:24px 0;
+    overflow-x:auto;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:minmax(150px,1fr) 32px minmax(150px,1fr) 32px minmax(150px,1fr) 32px minmax(150px,1fr);
+    align-items:stretch;
+    min-width:720px;
+  }
+  .pipe-node{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    border:1px solid var(--steel);
+    padding:10px 14px;
+    background:var(--paper);
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .pipe-node .n{font-size:15px;font-weight:500;color:var(--ink);}
+  .pipe-node .d{color:var(--steel);font-size:11px;margin-top:2px;}
+  .pipe-arrow{color:var(--steel);font-size:16px;text-align:center;}
+
+  /* ---- bar rows (category breakdown) ---- */
+  .barlist{margin:20px 0;}
+  .barrow{display:grid;grid-template-columns:150px 1fr 46px;align-items:center;gap:12px;padding:6px 0;}
+  .barrow .lbl{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel);}
+  .barrow .track{background:var(--rule);height:8px;position:relative;}
+  .barrow .fill{background:var(--steel);height:8px;position:absolute;left:0;top:0;}
+  .barrow .val{font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;}
+
+  /* dot plot for judge stability */
+  .dotplot{margin:24px 0;}
+  .dotrow{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--rule);}
+  .dotrow:last-child{border-bottom:none;}
+  .dotrow .lbl{font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .dottrack{position:relative;height:24px;background:linear-gradient(90deg,transparent,transparent);}
+  .dottrack .axis{position:absolute;left:0;right:0;top:50%;height:1px;background:var(--rule-strong);}
+  .dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid var(--paper);}
+  .dot.r1{background:var(--steel);}
+  .dot.r2{background:var(--amber-ink);}
+  .dot.r3{background:var(--ink);}
+  .dotplot-legend{display:flex;gap:18px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);margin-top:6px;}
+  .dotplot-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dotplot-legend i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .dot-axis-labels{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--steel);margin-top:2px;}
+  .dot-values{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--steel);margin-top:4px;}
+
+  /* ---- arch diagrams naive/graph ---- */
+  .arch-flow{display:flex;align-items:center;flex-wrap:wrap;gap:0;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .arch-box{border:1px solid var(--steel);padding:9px 13px;background:var(--paper);text-align:center;}
+  .arch-box.hi{border-color:var(--amber);color:var(--amber-ink);font-weight:500;}
+  .arch-arrow{padding:0 8px;color:var(--steel);}
+  .branch{display:flex;flex-direction:column;gap:8px;margin:10px 0;padding-left:28px;border-left:1px dashed var(--rule-strong);}
+
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;}
+  .metric-card{background:var(--paper-raised);border:1px solid var(--rule);padding:20px;}
+  .metric-card .big{font-family:'IBM Plex Mono',monospace;font-size:34px;color:var(--steel);}
+  .metric-card .big.graph{color:var(--amber-ink);}
+  .metric-card .big.good{color:var(--green);}
+  .metric-card .lbl{font-size:12.5px;color:var(--steel);margin-top:4px;}
+
+  /* ---- section 4 paired chart ---- */
+  .pairchart{margin:28px 0;}
+  .pc-row{display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center;padding:9px 0;}
+  .pc-cats{display:flex;flex-direction:column;}
+  .pc-label{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);margin-bottom:5px;}
+  .pc-bars{display:flex;flex-direction:column;gap:3px;}
+  .pc-bar-track{background:var(--rule);height:14px;position:relative;}
+  .pc-bar-fill{height:14px;position:absolute;left:0;top:0;display:flex;align-items:center;}
+  .pc-bar-fill.naive{background:var(--steel);}
+  .pc-bar-fill.graph{
+    background:repeating-linear-gradient(135deg,var(--amber) 0 4px,#B0821A 4px 8px);
+  }
+  .pc-bar-fill .fillval{
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--paper);
+    padding-left:5px;white-space:nowrap;
+  }
+  .pc-row-label-row{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--steel);margin-bottom:2px;}
+  .pairchart-legend{display:flex;gap:20px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);margin:14px 0 6px 0;}
+  .pairchart-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .pairchart-legend i{width:14px;height:10px;display:inline-block;}
+  .pairchart-legend i.naive{background:var(--steel);}
+  .pairchart-legend i.graph{background:repeating-linear-gradient(135deg,var(--amber) 0 4px,#B0821A 4px 8px);}
+
+  /* ---- worked examples ---- */
+  .example{margin:36px 0;border:1px solid var(--rule);}
+  .example-head{padding:16px 20px;border-bottom:1px solid var(--rule);background:var(--paper-raised);}
+  .example-head .exnum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber-ink);font-weight:500;}
+  .example-head .exq{font-size:15px;margin-top:6px;}
+  .example-head .exgold{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel);margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);}
+  .ex-row{display:grid;grid-template-columns:110px 1fr 90px 90px;gap:16px;padding:16px 20px;border-bottom:1px solid var(--rule);align-items:start;}
+  .ex-row:last-child{border-bottom:none;}
+  .ex-sys{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel);padding-top:2px;}
+  .ex-ans{font-size:14px;}
+  .ex-metric{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;}
+  .ex-metric .mlbl{display:block;font-size:9.5px;color:var(--steel);letter-spacing:0.03em;margin-bottom:2px;}
+  .ex-metric .mval{font-size:16px;}
+  .ex-metric .mval.zero{color:var(--signal);}
+  .ex-metric .mval.high{color:var(--green);}
+
+  /* ---- in-text citations (research-paper style, link to raw source on GitHub) ---- */
+  sup.cite{font-size:0.68em;}
+  a.cite{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--amber-ink);
+    text-decoration:none;
+    padding:0 1px;
+  }
+  a.cite:hover{text-decoration:underline;}
+  a.cite:focus-visible{outline:2px solid var(--steel);outline-offset:1px;}
+
+  .edge-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    background:rgba(196,148,31,0.09);
+    border:1px solid rgba(196,148,31,0.4);
+    padding:6px 10px;
+    margin-top:10px;
+    color:#7A5C15;
+    text-decoration:none;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  a.edge-tag:hover{background:rgba(196,148,31,0.17);border-color:rgba(196,148,31,0.65);}
+  a.edge-tag:focus-visible{outline:2px solid var(--steel);outline-offset:2px;}
+  .edge-tag .ext-icon{flex:0 0 auto;display:block;opacity:.7;}
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+  .example-note{padding:14px 20px;font-size:13.5px;color:var(--steel);background:var(--paper);}
+
+  /* ---- references ---- */
+  .reflist{list-style:none;margin:24px 0 0 0;padding:0;}
+  .reflist li{
+    display:grid;grid-template-columns:34px 1fr;gap:14px;
+    padding:12px 0;border-bottom:1px solid var(--rule);font-size:14px;
+  }
+  .reflist li:last-child{border-bottom:none;}
+  .refnum{font-family:'IBM Plex Mono',monospace;color:var(--amber-ink);font-weight:500;font-size:13px;}
+  .reftxt b{font-weight:600;}
+  .reftxt .refdesc{color:#2B2E30;}
+  .reflink{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);
+    text-decoration:none;display:inline-flex;align-items:center;gap:5px;
+    margin-top:4px;
+  }
+  .reflink:hover{text-decoration:underline;}
+  .reflink:focus-visible{outline:2px solid var(--steel);outline-offset:1px;}
+  .reflink .ext-icon{flex:0 0 auto;opacity:.7;}
+
+  /* ---- heatmap ---- */
+  .heatmap-wrap{overflow-x:auto;margin:24px 0;}
+  table.heatmap{border-collapse:collapse;width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  table.heatmap th{
+    font-weight:500;text-align:left;padding:8px 10px;
+    font-size:11px;color:var(--steel);border-bottom:1px solid var(--rule-strong);
+    white-space:nowrap;
+  }
+  table.heatmap td{padding:9px 10px;text-align:center;border-bottom:1px solid var(--rule);position:relative;}
+  table.heatmap th.rowlabel{
+    text-align:left;color:var(--ink);white-space:nowrap;
+    font-weight:500;padding:9px 10px;border-bottom:1px solid var(--rule);
+  }
+  table.heatmap caption{caption-side:top;}
+  table.heatmap td.cell{cursor:default;}
+  table.heatmap td.cell span{position:relative;z-index:1;}
+  table.heatmap td.na{color:var(--rule-strong);}
+  .glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;margin-top:24px;}
+  .gloss-item{font-size:13px;}
+  .gloss-item b{font-family:'IBM Plex Mono',monospace;font-size:12.5px;display:block;margin-bottom:2px;}
+
+  /* ---- takeaway ---- */
+  .headline-box{
+    border:1px solid var(--ink);
+    padding:24px 26px;
+    margin-bottom:28px;
+  }
+  .status-strip{margin:24px 0;}
+  .status-row{
+    display:grid;grid-template-columns:100px 1fr;gap:16px;
+    padding:12px 0;border-bottom:1px solid var(--rule);
+  }
+  .status-row:last-child{border-bottom:none;}
+  .status-pill{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+    padding:3px 9px;border:1px solid;align-self:start;
+    text-align:center;height:fit-content;
+  }
+  .status-pill.open{color:var(--signal);border-color:var(--signal);}
+  .status-pill.partial{color:var(--amber-ink);border-color:var(--amber-ink);}
+  .status-row .txt{font-size:14px;}
+  .status-row .txt b{font-weight:600;}
+
+  footer{
+    padding:48px 0 96px 0;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--steel);
+    max-width:880px;
+  }
+
+  @media (max-width:920px){
+    /* minmax(0,1fr), not bare 1fr -- a bare 1fr track's minimum size is its
+       content's min-content width (CSS Grid default), so wide children
+       (the pipeline diagram, SVG, etc) blow the grid past the viewport
+       instead of shrinking. This is the same reason the desktop rule uses
+       minmax(0,880px) instead of a plain max-width. */
+    .layout{grid-template-columns:minmax(0,1fr);padding:0;}
+    /* Nav rail becomes a horizontal, sticky, scrollable tab strip instead of
+       disappearing -- the page has 7 sections and no other way to jump
+       between them, so removing navigation entirely on mobile/tablet left
+       no way to move around except manual scrolling. */
+    nav{
+      display:flex;flex-direction:row;gap:0;
+      position:sticky;top:0;z-index:20;
+      padding:0 20px;
+      background:var(--paper);
+      border-bottom:1px solid var(--rule);
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      white-space:nowrap;
+    }
+    nav a{
+      border-left:none;border-bottom:2px solid var(--rule);
+      padding:14px 12px;
+      flex:0 0 auto;
+    }
+    nav a:hover{border-left:none;border-bottom-color:var(--steel);}
+    nav a.active{border-left:none;border-bottom-color:var(--amber);}
+    main{padding:0 20px;}
+    section, header.hero{max-width:100%;}
+    section{padding:32px 0;}
+    header.hero{padding-top:32px;}
+    header.hero h1{font-size:32px;}
+    .metric-grid{grid-template-columns:1fr;}
+    .ex-row{grid-template-columns:1fr;}
+    .ex-metric{text-align:left;}
+    .glossary{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="layout">
+  <nav id="rail" aria-label="Report sections">
+    <a href="#s0">What AeroOps Is</a>
+    <a href="#s1">Methodology</a>
+    <a href="#s2">Naive RAG</a>
+    <a href="#s3">GraphRAG</a>
+    <a href="#s4">Why Graph "Lost"</a>
+    <a href="#s5">Mechanical Metrics</a>
+    <a href="#s6">Takeaway</a>
+    <a href="#s7">References</a>
+  </nav>
+
+  <main id="main">
+    <header class="hero">
+      <div class="eyebrow">EVALUATION REPORT — TURBOFAN MAINTENANCE DIAGNOSTIC REASONING</div>
+      <h1>GraphRAG found the evidence naive RAG missed. The metric that scored them couldn't see it.</h1>
+      <p class="sub">A 45-item, jury-verified evaluation of naive RAG vs. GraphRAG diagnostic reasoning over turbofan engine maintenance documentation — built, benchmarked, and audited end to end.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="num">45</div><div class="lbl">gold-set items</div></div>
+        <div class="hero-stat"><div class="num">0.744</div><div class="lbl">GraphRAG context recall</div></div>
+        <div class="hero-stat"><div class="num">1.0</div><div class="lbl">edge authenticity</div></div>
+        <div class="hero-stat"><div class="num">7</div><div class="lbl">question categories</div></div>
+      </div>
+    </header>
+
+    <!-- SECTION 0 -->
+    <section id="s0">
+      <div class="section-head"><h2>What AeroOps Is</h2><span class="section-tag">SYSTEM OVERVIEW</span></div>
+      <p class="lede">AeroOps is a diagnostic reasoning system for turbofan engine maintenance — it traces fault chains, cross-references procedures, and synthesizes answers across 260 pages of failure-mode, deterioration, and maintenance documentation, the same way an experienced engineer would work a diagnosis across multiple manuals. GraphRAG was built to test whether representing that documentation as a knowledge graph produces more reliable multi-hop and cross-document reasoning than standard vector-similarity retrieval. Maintenance decisions in this domain carry real safety and cost consequences, which is why this evaluation holds both systems to a hard standard: not just whether an answer sounds right, but whether it's actually traceable to the evidence.</p>
+
+      <div class="diagram">
+        <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="s0arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#1A1D1F"/>
+            </marker>
+          </defs>
+
+          <text x="0" y="14" font-family="IBM Plex Mono" font-size="11" fill="#3D4A52">260 PAGES · 7 DOCUMENTS</text>
+
+          <!-- source content types -->
+          <g font-family="IBM Plex Mono" font-size="10.5" fill="#3D4A52">
+            <rect x="0" y="26" width="130" height="28" fill="#FCFBF8" stroke="#3D4A52"/>
+            <text x="10" y="44">Failure modes</text>
+            <rect x="0" y="66" width="130" height="28" fill="#FCFBF8" stroke="#3D4A52"/>
+            <text x="10" y="84">Procedures</text>
+            <rect x="0" y="106" width="130" height="28" fill="#FCFBF8" stroke="#3D4A52"/>
+            <text x="10" y="124">Symptoms/params</text>
+          </g>
+
+          <!-- both systems read from the SAME source pool: 3 sources -> shared bus -> both systems -->
+          <g stroke="#DCD5C4" fill="none">
+            <line x1="130" y1="40" x2="155" y2="40"/>
+            <line x1="130" y1="80" x2="155" y2="80"/>
+            <line x1="130" y1="120" x2="155" y2="120"/>
+            <line x1="155" y1="40" x2="155" y2="120"/>
+            <line x1="155" y1="55" x2="215" y2="55"/>
+            <line x1="155" y1="105" x2="215" y2="105"/>
+          </g>
+
+          <!-- Naive RAG -->
+          <rect x="215" y="28" width="160" height="54" fill="#F7F5F0" stroke="#1A1D1F" stroke-width="1.4"/>
+          <text x="227" y="50" font-family="IBM Plex Mono" font-size="11" fill="#1A1D1F">Naive RAG</text>
+          <text x="227" y="65" font-family="IBM Plex Mono" font-size="9.5" fill="#3D4A52">vector top-k</text>
+
+          <!-- GraphRAG -->
+          <rect x="215" y="78" width="160" height="54" fill="#F7F5F0" stroke="#C4941F" stroke-width="1.4"/>
+          <text x="227" y="100" font-family="IBM Plex Mono" font-size="11" fill="#8A6510">GraphRAG</text>
+          <text x="227" y="115" font-family="IBM Plex Mono" font-size="9.5" fill="#3D4A52">graph traversal</text>
+
+          <!-- both systems' answers merge into one output -->
+          <g stroke="#3D4A52" fill="none">
+            <line x1="375" y1="55" x2="410" y2="55"/>
+            <line x1="375" y1="105" x2="410" y2="105"/>
+            <line x1="410" y1="55" x2="410" y2="105"/>
+            <line x1="410" y1="80" x2="450" y2="80" marker-end="url(#s0arrow)"/>
+          </g>
+
+          <rect x="455" y="53" width="155" height="54" fill="none" stroke="#1A1D1F" stroke-width="1.4"/>
+          <text x="467" y="75" font-family="IBM Plex Mono" font-size="11" fill="#1A1D1F">Answer +</text>
+          <text x="467" y="90" font-family="IBM Plex Mono" font-size="11" fill="#1A1D1F">citations</text>
+
+          <line x1="610" y1="80" x2="655" y2="80" stroke="#3D4A52" marker-end="url(#s0arrow)"/>
+          <text x="660" y="84" font-family="IBM Plex Mono" font-size="10.5" fill="#3D4A52">engineer</text>
+        </svg>
+        <div class="cap">Both systems read the same source documents — only the retrieval path differs.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 1 -->
+    <section id="s1">
+      <div class="section-head"><h2>Evaluation Methodology</h2><span class="section-tag">GOLD SET · JUDGE STABILITY</span></div>
+
+      <div class="pipeline-wrap">
+        <div class="pipeline">
+          <div class="pipe-node"><div class="n">Gemini</div><div class="d">generates expected answer</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><div class="n">3-way jury</div><div class="d">Qwen3.8 · GPT-5.6 · Opus 5</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><div class="n">44/45</div><div class="d">unanimous, 1 resolved by human review</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node" style="border-color:#C4941F;"><div class="n" style="color:#8A6510;">Frozen set</div><div class="d">45 items, 7 categories</div></div>
+        </div>
+      </div>
+      <p style="margin-top:16px;font-size:14.5px;color:var(--steel);max-width:60ch;">Every item in this set is either machine-verified by independent consensus or personally checked by hand. Nothing in the gold set is unverified.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/gold_set/aeroops_goldset_v1_frozen.json" target="_blank" rel="noopener noreferrer">[1]<span class="sr-only">(opens the full frozen gold set on GitHub, in a new tab)</span></a></sup></p>
+
+      <div class="barlist">
+        <div class="barrow"><span class="lbl">multi_hop_causal</span><div class="track"><div class="fill" style="width:100%;"></div></div><span class="val">8</span></div>
+        <div class="barrow"><span class="lbl">operational_scenario</span><div class="track"><div class="fill" style="width:100%;"></div></div><span class="val">8</span></div>
+        <div class="barrow"><span class="lbl">cross_document</span><div class="track"><div class="fill" style="width:100%;"></div></div><span class="val">8</span></div>
+        <div class="barrow"><span class="lbl">aggregation_fanout</span><div class="track"><div class="fill" style="width:75%;"></div></div><span class="val">6</span></div>
+        <div class="barrow"><span class="lbl">disambiguation</span><div class="track"><div class="fill" style="width:75%;"></div></div><span class="val">6</span></div>
+        <div class="barrow"><span class="lbl">factual_single_hop</span><div class="track"><div class="fill" style="width:75%;"></div></div><span class="val">6</span></div>
+        <div class="barrow"><span class="lbl">provenance</span><div class="track"><div class="fill" style="width:37.5%;"></div></div><span class="val">3</span></div>
+      </div>
+
+      <h3 style="font-size:17px;margin-top:36px;">Is the judge itself reliable?</h3>
+      <p>The same 45 GraphRAG answers were re-scored 3 times by the RAGAS judge, with nothing regenerated between runs. The aggregate mean held tight. Individual items didn't.</p>
+
+      <div class="dotplot">
+        <div class="dotrow">
+          <span class="lbl">Faithfulness<br><span style="color:#8B3A3A;">mean spread 0.027</span></span>
+          <div>
+            <div class="dottrack"><div class="axis"></div>
+              <div class="dot r1" style="left:58.9%;" title="Run 1: 0.589"></div>
+              <div class="dot r2" style="left:57.7%;" title="Run 2: 0.577"></div>
+              <div class="dot r3" style="left:56.2%;" title="Run 3: 0.562"></div>
+            </div>
+            <div class="dot-axis-labels" aria-hidden="true"><span>0.0</span><span>0.5</span><span>1.0</span></div>
+            <div class="dot-values">Run 1: 0.589 &nbsp;·&nbsp; Run 2: 0.577 &nbsp;·&nbsp; Run 3: 0.562</div>
+          </div>
+        </div>
+        <div class="dotrow">
+          <span class="lbl">Context Recall<br><span style="color:#8B3A3A;">mean spread 0.017</span></span>
+          <div>
+            <div class="dottrack"><div class="axis"></div>
+              <div class="dot r1" style="left:77.8%;" title="Run 1: 0.778"></div>
+              <div class="dot r2" style="left:77.2%;" title="Run 2: 0.772"></div>
+              <div class="dot r3" style="left:76.1%;" title="Run 3: 0.761"></div>
+            </div>
+            <div class="dot-axis-labels" aria-hidden="true"><span>0.0</span><span>0.5</span><span>1.0</span></div>
+            <div class="dot-values">Run 1: 0.778 &nbsp;·&nbsp; Run 2: 0.772 &nbsp;·&nbsp; Run 3: 0.761</div>
+          </div>
+        </div>
+        <div class="dotrow">
+          <span class="lbl">AF03<br><span style="color:#8B3A3A;">single item, 3 runs</span></span>
+          <div>
+            <div class="dottrack"><div class="axis"></div>
+              <div class="dot r1" style="left:0%;" title="Run 1: 0.0"></div>
+              <div class="dot r2" style="left:66.7%;" title="Run 2: 0.667"></div>
+              <div class="dot r3" style="left:0%;" title="Run 3: 0.0"></div>
+            </div>
+            <div class="dot-axis-labels" aria-hidden="true"><span>0.0</span><span>0.5</span><span>1.0</span></div>
+            <div class="dot-values">Run 1: 0.0 &nbsp;·&nbsp; Run 2: 0.667 &nbsp;·&nbsp; Run 3: 0.0</div>
+          </div>
+        </div>
+      </div>
+      <div class="dotplot-legend">
+        <span><i style="background:#3D4A52;"></i>Run 1</span>
+        <span><i style="background:#8A6510;"></i>Run 2</span>
+        <span><i style="background:#1A1D1F;"></i>Run 3</span>
+      </div>
+
+      <div class="callout">The aggregate mean is stable enough to trust for system-level comparisons (±0.03). A single item's score is not — AF03 alone swung the full 0.0–0.667 range on identical input. This stability check ran on an earlier snapshot, before this session's final retrieval fixes; what carries forward is the property that the judge disagrees with itself on identical input, not the exact spread number.</div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section id="s2">
+      <div class="section-head"><h2>Naive RAG</h2><span class="section-tag">BASELINE</span></div>
+      <div class="arch-flow">
+        <div class="arch-box">Query</div><div class="arch-arrow">→</div>
+        <div class="arch-box">Hybrid search<br><span style="color:#3D4A52;font-size:10px;">dense + BM25</span></div><div class="arch-arrow">→</div>
+        <div class="arch-box">top-k = 5</div><div class="arch-arrow">→</div>
+        <div class="arch-box hi">gpt-oss-20b</div>
+      </div>
+      <p style="margin-top:20px;">Dense vector search (MiniLM embeddings, ChromaDB) merged with BM25 keyword search<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/naive_rag.py" target="_blank" rel="noopener noreferrer">[3]<span class="sr-only">(opens naive_rag.py on GitHub, in a new tab)</span></a></sup>, deduplicated and truncated to the top 5 chunks per query. A keyword metadata filter narrows retrieval to the relevant document before search runs.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/aeroops_naive_rag_ragas_results.json" target="_blank" rel="noopener noreferrer">[2]<span class="sr-only">(opens the naive RAG RAGAS evaluation results on GitHub, in a new tab)</span></a></sup></p>
+
+      <div class="metric-grid">
+        <div class="metric-card"><div class="big">0.765</div><div class="lbl">Faithfulness, overall</div></div>
+        <div class="metric-card"><div class="big">0.470</div><div class="lbl">Context Recall, overall</div></div>
+      </div>
+
+      <div class="barlist" style="margin-top:28px;">
+        <div class="barrow"><span class="lbl">factual_single_hop</span><div class="track"><div class="fill" style="width:83.3%;"></div></div><span class="val">0.833</span></div>
+        <div class="barrow"><span class="lbl">cross_document</span><div class="track"><div class="fill" style="width:52.1%;"></div></div><span class="val">0.521</span></div>
+        <div class="barrow"><span class="lbl">multi_hop_causal</span><div class="track"><div class="fill" style="width:18.8%;"></div></div><span class="val">0.188</span></div>
+        <div class="barrow"><span class="lbl">aggregation_fanout</span><div class="track"><div class="fill" style="width:58.3%;"></div></div><span class="val">0.583</span></div>
+        <div class="barrow"><span class="lbl">disambiguation</span><div class="track"><div class="fill" style="width:50%;"></div></div><span class="val">0.500</span></div>
+        <div class="barrow"><span class="lbl">operational_scenario</span><div class="track"><div class="fill" style="width:37.5%;"></div></div><span class="val">0.375</span></div>
+        <div class="barrow"><span class="lbl">provenance</span><div class="track"><div class="fill" style="width:33.3%;"></div></div><span class="val">0.333</span></div>
+      </div>
+      <div class="cap" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3D4A52;">Context Recall by category<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/aeroops_naive_rag_ragas_results.json" target="_blank" rel="noopener noreferrer">[2]<span class="sr-only">(opens the naive RAG RAGAS evaluation results on GitHub, in a new tab)</span></a></sup></div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section id="s3">
+      <div class="section-head"><h2>GraphRAG</h2><span class="section-tag">GRAPH-STRUCTURED RETRIEVAL</span></div>
+      <div class="arch-flow" style="align-items:flex-start;">
+        <div class="arch-box">Query</div><div class="arch-arrow">→</div>
+        <div class="arch-box hi">QueryRouter<br><span style="color:#3D4A52;font-size:10px;">rule-based</span></div>
+        <sup class="cite" style="margin-left:2px;"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/query_understanding_v3.py" target="_blank" rel="noopener noreferrer">[4]<span class="sr-only">(opens query_understanding_v3.py on GitHub, in a new tab)</span></a></sup>
+      </div>
+      <div class="branch">
+        <div class="arch-flow"><div class="arch-box">Path traversal</div><div class="arch-arrow">→</div><span style="font-size:11px;color:#3D4A52;">real edges only — CAUSES / LEADS_TO / MANIFESTS_AS / DEGRADES / MITIGATES / INDICATES</span></div>
+        <div class="arch-flow"><div class="arch-box">Star retrieval</div><div class="arch-arrow">→</div><span style="font-size:11px;color:#3D4A52;">single-entity, capped at 16 chunks</span></div>
+        <div class="arch-flow"><div class="arch-box">No-path fallback</div><div class="arch-arrow">→</div><span style="font-size:11px;color:#3D4A52;">independent stars, no connecting edge</span></div>
+      </div>
+      <div class="arch-flow">
+        <div class="arch-box">ContextBuilder</div>
+        <sup class="cite" style="margin-left:2px;"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/context_builder.py" target="_blank" rel="noopener noreferrer">[6]<span class="sr-only">(opens context_builder.py on GitHub, in a new tab)</span></a></sup>
+        <div class="arch-arrow">→</div><div class="arch-box hi">gpt-oss-20b</div>
+      </div>
+      <p style="margin-top:20px;">Retrieval dispatches into one of two main paths depending on the query<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/graphretriever_v5.py" target="_blank" rel="noopener noreferrer">[5]<span class="sr-only">(opens graphretriever_v5.py on GitHub, in a new tab)</span></a></sup>, both restricted to real semantic edge types — never structural co-occurrence. Generation runs under a 15-rule grounding prompt<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/answer_generator_groq.py" target="_blank" rel="noopener noreferrer">[7]<span class="sr-only">(opens answer_generator_groq.py on GitHub, in a new tab)</span></a></sup>, including a rule that preserves the source's own cause→effect direction rather than inverting it.</p>
+
+      <div class="metric-grid">
+        <div class="metric-card"><div class="big graph">0.627</div><div class="lbl">Faithfulness, overall</div></div>
+        <div class="metric-card"><div class="big good">0.744</div><div class="lbl">Context Recall, overall<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_ragas_results.json" target="_blank" rel="noopener noreferrer">[8]<span class="sr-only">(opens the GraphRAG RAGAS evaluation results on GitHub, in a new tab)</span></a></sup></div></div>
+      </div>
+
+      <div class="barlist" style="margin-top:28px;">
+        <div class="barrow"><span class="lbl">factual_single_hop</span><div class="track"><div class="fill" style="width:83.3%;background:#C4941F;"></div></div><span class="val">0.833</span></div>
+        <div class="barrow"><span class="lbl">cross_document</span><div class="track"><div class="fill" style="width:68.8%;background:#C4941F;"></div></div><span class="val">0.688</span></div>
+        <div class="barrow"><span class="lbl">multi_hop_causal</span><div class="track"><div class="fill" style="width:75%;background:#C4941F;"></div></div><span class="val">0.750</span></div>
+        <div class="barrow"><span class="lbl">aggregation_fanout</span><div class="track"><div class="fill" style="width:66.7%;background:#C4941F;"></div></div><span class="val">0.667</span></div>
+        <div class="barrow"><span class="lbl">disambiguation</span><div class="track"><div class="fill" style="width:58.3%;background:#C4941F;"></div></div><span class="val">0.583</span></div>
+        <div class="barrow"><span class="lbl">operational_scenario</span><div class="track"><div class="fill" style="width:81.2%;background:#C4941F;"></div></div><span class="val">0.812</span></div>
+        <div class="barrow"><span class="lbl">provenance</span><div class="track"><div class="fill" style="width:100%;background:#C4941F;"></div></div><span class="val">1.000</span></div>
+      </div>
+      <div class="cap" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#3D4A52;">Context Recall by category<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_ragas_results.json" target="_blank" rel="noopener noreferrer">[8]<span class="sr-only">(opens the GraphRAG RAGAS evaluation results on GitHub, in a new tab)</span></a></sup></div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section id="s4">
+      <div class="section-head"><h2>Naive vs. GraphRAG: Why Graph "Lost"</h2><span class="section-tag">FAITHFULNESS · CONTEXT RECALL</span></div>
+      <p class="lede">RAGAS Faithfulness checks whether each claim in an answer can be traced to a single literal passage of retrieved text. It gives no credit for combining several separately-true passages into one synthesized, correct conclusion — which is exactly what GraphRAG is built to do.</p>
+
+      <div class="pairchart">
+        <div class="pairchart-legend"><span><i class="naive"></i>Naive RAG (solid)</span><span><i class="graph"></i>GraphRAG (striped)</span></div>
+        <div id="pairchart-body"></div>
+      </div>
+
+      <p style="font-size:14.5px;color:var(--steel);">Three representative examples follow. Every answer below links directly to its full raw record — GraphRAG's to the exact graph edges backing its claim<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json" target="_blank" rel="noopener noreferrer">[9]<span class="sr-only">(opens the full GraphRAG raw evaluation outputs on GitHub, in a new tab)</span></a></sup>, naive RAG's to its retrieved context and generated answer<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/naive_rag_ragas_inputs.json" target="_blank" rel="noopener noreferrer">[10]<span class="sr-only">(opens the full naive RAG raw evaluation outputs on GitHub, in a new tab)</span></a></sup>.</p>
+
+      <!-- EXAMPLE 1 -->
+      <div class="example">
+        <div class="example-head">
+          <div class="exnum">EXAMPLE 1 — MH03</div>
+          <div class="exq">How could the failure of a single fuel tank boost pump potentially cause a multiple-engine flameout?</div>
+          <div class="exgold">GOLD: The boost pump failure can generate debris that clogs the fuel filter. Once clogged, disrupted fuel flow or contamination bypassing the filter introduces the potential for a multiple-engine flameout.</div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">Naive RAG</div>
+          <div class="ex-ans">"The provided context does not contain information on how a single fuel tank boost pump failure could cause a multiple-engine flameout."<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/naive_rag_ragas_inputs.json#L202" target="_blank" rel="noopener noreferrer">[10]<span class="sr-only">(opens raw evaluation record for MH03 on GitHub, in a new tab)</span></a></sup></div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval high">1.0</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval zero">0.0</span></div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">GraphRAG</div>
+          <div class="ex-ans">
+            "A failure of one fuel-tank boost pump can generate debris that clogs the fuel filter, which in turn can cause fuel starvation and lead to flameout. Because the filter feeds multiple engines, a single pump failure can precipitate a flameout in more than one engine."
+            <a class="edge-tag" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json#L738" target="_blank" rel="noopener noreferrer">
+              CAUSES · claim CL051 · conf 0.8 · D3_c29  →  LEADS_TO · claim CL052 · conf 0.75 · D3_c30
+              <svg class="ext-icon" width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#7A5C15" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#7A5C15" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="sr-only">(opens raw evaluation record for MH03 on GitHub, in a new tab)</span>
+            </a>
+          </div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval zero">0.0</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval">0.5</span></div>
+        </div>
+        <div class="example-note">Naive refused to answer and scored a perfect 1.0 — a refusal contains no claims, so nothing can be unfaithful. GraphRAG gave the substantively correct answer, backed by two real, individually-sourced graph edges, and scored 0.0 because no single passage states the full chain in one sentence.</div>
+      </div>
+
+      <!-- EXAMPLE 2 -->
+      <div class="example">
+        <div class="example-head">
+          <div class="exnum">EXAMPLE 2 — OS08</div>
+          <div class="exq">In flight, the pilot notices brief fluctuations in EPR and EGT, but the engine continues running normally because the continuous ignition system activated automatically. What event did the ignition system prevent?</div>
+          <div class="exgold">GOLD: It prevented a total flameout by automatically restarting combustion after unstable engine operation or a temporary fuel interruption.</div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">Naive RAG</div>
+          <div class="ex-ans">"The provided context does not contain information about the continuous ignition system or the event it prevented."<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/naive_rag_ragas_inputs.json#L1200" target="_blank" rel="noopener noreferrer">[10]<span class="sr-only">(opens raw evaluation record for OS08 on GitHub, in a new tab)</span></a></sup></div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval high">1.0</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval zero">0.0</span></div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">GraphRAG</div>
+          <div class="ex-ans">
+            "The continuous ignition prevented a flameout."
+            <a class="edge-tag" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json#L4309" target="_blank" rel="noopener noreferrer">
+              MITIGATES · claim CL033 · conf 0.85 · D3_c12  ·  LEADS_TO · claim CL030 · conf 0.8 · D3_c09
+              <svg class="ext-icon" width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#7A5C15" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#7A5C15" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="sr-only">(opens raw evaluation record for OS08 on GitHub, in a new tab)</span>
+            </a>
+          </div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval zero">0.0</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval high">1.0</span></div>
+        </div>
+        <div class="example-note">Same pattern, narrower cause: GraphRAG retrieved 100% of the needed evidence (Recall = 1.0) but the judge wouldn't accept "prevented a flameout" as entailed by a source stating combustion "will restart automatically" — a legitimate paraphrase, rejected on strict literalism.</div>
+      </div>
+
+      <!-- EXAMPLE 3 -->
+      <div class="example">
+        <div class="example-head">
+          <div class="exnum">EXAMPLE 3 — OS01</div>
+          <div class="exq">A pilot reports a loud bang and heavy vibration during takeoff, but notes the engine recovered immediately after they pulled back the thrust lever. What fault happened and what corrected it?</div>
+          <div class="exgold">GOLD: The engine experienced a compressor surge; retarding the thrust lever allowed the engine to recover airflow stability.</div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">Naive RAG</div>
+          <div class="ex-ans">"The loud bang and heavy vibration were caused by a compressor surge in the turbofan engine. Pulling back the thrust lever reduced the airflow and stopped the surge, allowing the engine to recover immediately."<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/naive_rag_ragas_inputs.json#L1041" target="_blank" rel="noopener noreferrer">[10]<span class="sr-only">(opens raw evaluation record for OS01 on GitHub, in a new tab)</span></a></sup></div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval zero">0.0</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval">0.5</span></div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">GraphRAG</div>
+          <div class="ex-ans">
+            "The fault was a compressor surge / stall, which manifested as a loud bang and heavy vibration. The engine recovered when the pilot retarded the thrust lever, which is the prescribed mitigation for a compressor surge."
+            <a class="edge-tag" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json#L3685" target="_blank" rel="noopener noreferrer">
+              MANIFESTS_AS · claim CL024 · conf 0.95 · D3_c03  ·  LEADS_TO · claim CL028 · conf 0.85 · D3_c07
+              <svg class="ext-icon" width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#7A5C15" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#7A5C15" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="sr-only">(opens raw evaluation record for OS01 on GitHub, in a new tab)</span>
+            </a>
+          </div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval">0.25</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval high">1.0</span></div>
+        </div>
+        <div class="example-note">Here both systems answer correctly and both score low — the one case of the three where naive RAG's own faithfulness collapses too. This isn't purely a "GraphRAG is disadvantaged" story: the judge is broadly harsh on causal-attribution language regardless of backend, just harsher and more often on GraphRAG's multi-hop phrasing.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section id="s5">
+      <div class="section-head"><h2>GraphRAG-only Mechanical Metrics</h2><span class="section-tag">DETERMINISTIC · NO LLM JUDGE</span></div>
+      <p>Seven metrics computed directly against the graph and the gold set<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_mechanical_scores.json" target="_blank" rel="noopener noreferrer">[11]<span class="sr-only">(opens the GraphRAG mechanical scores on GitHub, in a new tab)</span></a></sup> — no judge, no subjectivity. For the first six columns, darker amber = weaker score. Overfetch uses a separate blue-gray scale (darker = more over-retrieval) since higher is worse there, the opposite direction of every other column — values are printed in every cell either way, so the color is a supplement, not the only signal.</p>
+
+      <div class="heatmap-wrap">
+        <table class="heatmap" id="heatmap"></table>
+      </div>
+
+      <div class="glossary">
+        <div class="gloss-item"><b>Node Recall</b>Of the entities the gold answer needs, what fraction did the system find?</div>
+        <div class="gloss-item"><b>Node Precision</b>Of everything the system found, what fraction was actually needed?</div>
+        <div class="gloss-item"><b>Citation Recall</b>Did the answer cite every source passage it needed to?</div>
+        <div class="gloss-item"><b>Citation Precision</b>Of the sources cited, how many were necessary?</div>
+        <div class="gloss-item"><b>Chain Coverage</b>For multi-step questions, how much of the expected reasoning sequence did the system reconstruct, in order?</div>
+        <div class="gloss-item"><b>Edge Authenticity</b>Of every causal link the answer relies on, what fraction traces to a real, document-sourced graph edge — not two facts that just happened to sit near each other?</div>
+        <div class="gloss-item"><b>Overfetch</b>How many source passages were retrieved versus how many the gold answer actually needed.</div>
+      </div>
+      <div class="callout" style="margin-top:24px;">Edge Authenticity is 1.0 everywhere a reasoning chain exists — every causal link GraphRAG narrates in this evaluation traces to a real, claim-backed relationship. It never fabricates a cause it can't source.</div>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section id="s6">
+      <div class="section-head"><h2>Takeaway</h2><span class="section-tag">FINAL</span></div>
+
+      <div class="headline-box">
+        <p style="margin:0;font-size:15.5px;">GraphRAG finds the right evidence nearly 60% more often than naive RAG — 0.744 vs. 0.470 Context Recall<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_ragas_results.json" target="_blank" rel="noopener noreferrer">[8]<span class="sr-only">(opens the GraphRAG RAGAS evaluation results on GitHub, in a new tab)</span></a></sup>, a win in almost every category — and it never fabricates a causal relationship that isn't in the documentation. Naive RAG's higher blended Faithfulness score (0.765 vs. 0.627)<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/aeroops_naive_rag_ragas_results.json" target="_blank" rel="noopener noreferrer">[2]<span class="sr-only">(opens the naive RAG RAGAS evaluation results on GitHub, in a new tab)</span></a></sup> isn't a system failure on GraphRAG's part. It's a metric that rewards saying nothing over reasoning correctly across real, verified evidence — proven directly, with the receipts, in Section 4.</p>
+      </div>
+
+      <h3 style="font-size:16px;margin-top:8px;">Known limitations — stated plainly</h3>
+      <div class="status-strip">
+        <div class="status-row"><span class="status-pill open">OPEN</span><div class="txt"><b>Overfetch, ~7.3x average.</b> A direct test confirmed shrinking the retrieval cap is unsafe — it breaks evidence coverage on hard questions before it meaningfully cuts overfetch on easy ones. The right fix is an adaptive, per-query budget; scoped, not built.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_mechanical_scores.json" target="_blank" rel="noopener noreferrer">[11]<span class="sr-only">(opens the GraphRAG mechanical scores on GitHub, in a new tab)</span></a></sup></div></div>
+        <div class="status-row"><span class="status-pill open">OPEN</span><div class="txt"><b>Node precision is low (0.369).</b> The recall-heavy design means a meaningful fraction of what's retrieved per query isn't needed — the flip side of overfetch.</div></div>
+        <div class="status-row"><span class="status-pill open">OPEN</span><div class="txt"><b>cross_document is the weakest category</b> on nearly every mechanical metric. Flagged, not yet root-caused.</div></div>
+        <div class="status-row"><span class="status-pill open">OPEN</span><div class="txt"><b>Chain Coverage is low (0.189).</b> Even correct entity/edge identification frequently doesn't reconstruct the gold answer's full reasoning sequence in order.</div></div>
+        <div class="status-row"><span class="status-pill partial">PARTIAL</span><div class="txt"><b>The Faithfulness metric-blindness has no clean fix.</b> Prompt-engineering fixed a genuine directional-inversion bug<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/answer_generator_groq.py" target="_blank" rel="noopener noreferrer">[7]<span class="sr-only">(opens answer_generator_groq.py on GitHub, in a new tab)</span></a></sup>, but can't close the gap on genuinely multi-hop synthesized claims — a mismatch between the metric and what GraphRAG is designed to do, not a system defect.</div></div>
+      </div>
+    </section>
+
+    <!-- SECTION 7 -->
+    <section id="s7">
+      <div class="section-head"><h2>References</h2><span class="section-tag">SOURCE FILES · ALL LINKS OPEN ON GITHUB</span></div>
+      <p style="font-size:14.5px;color:var(--steel);">Every numbered citation in this report links to a real file in the public repository — full raw output, not a summary of it.</p>
+
+      <ol class="reflist">
+        <li id="ref1"><span class="refnum">[1]</span><span class="reftxt">
+          <b>Frozen gold set</b> — <span class="refdesc">45 items, 7 categories, jury-verified (Gemini-generated, cross-checked by Qwen3.8/GPT-5.6/Opus 5).</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/gold_set/aeroops_goldset_v1_frozen.json" target="_blank" rel="noopener noreferrer">evaluation/gold_set/aeroops_goldset_v1_frozen.json<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref2"><span class="refnum">[2]</span><span class="reftxt">
+          <b>Naive RAG — RAGAS evaluation results</b> — <span class="refdesc">Faithfulness and Context Recall, scored per item and by category.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/aeroops_naive_rag_ragas_results.json" target="_blank" rel="noopener noreferrer">evaluation/naive_rag/aeroops_naive_rag_ragas_results.json<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref3"><span class="refnum">[3]</span><span class="reftxt">
+          <b>naive_rag.py</b> — <span class="refdesc">Hybrid BM25 + dense-vector retrieval and generation implementation.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/naive_rag.py" target="_blank" rel="noopener noreferrer">naive_rag.py<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref4"><span class="refnum">[4]</span><span class="reftxt">
+          <b>query_understanding_v3.py</b> — <span class="refdesc">QueryRouter: rule-based entity extraction, hop-count and intent classification.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/query_understanding_v3.py" target="_blank" rel="noopener noreferrer">query_understanding_v3.py<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref5"><span class="refnum">[5]</span><span class="reftxt">
+          <b>graphretriever_v5.py</b> — <span class="refdesc">GraphRetriever: path-traversal, star retrieval, and no-path fallback logic.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/graphretriever_v5.py" target="_blank" rel="noopener noreferrer">graphretriever_v5.py<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref6"><span class="refnum">[6]</span><span class="reftxt">
+          <b>context_builder.py</b> — <span class="refdesc">ContextBuilder: formats retrieved graph facts with inline chunk-level provenance.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/context_builder.py" target="_blank" rel="noopener noreferrer">context_builder.py<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref7"><span class="refnum">[7]</span><span class="reftxt">
+          <b>answer_generator_groq.py</b> — <span class="refdesc">AnswerGenerator: the 15-rule grounding prompt, including the directional-inversion fix.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/answer_generator_groq.py" target="_blank" rel="noopener noreferrer">answer_generator_groq.py<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref8"><span class="refnum">[8]</span><span class="reftxt">
+          <b>GraphRAG — RAGAS evaluation results</b> — <span class="refdesc">Faithfulness and Context Recall, scored per item and by category.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_ragas_results.json" target="_blank" rel="noopener noreferrer">evaluation/graphrag/aeroops_graphrag_ragas_results.json<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref9"><span class="refnum">[9]</span><span class="reftxt">
+          <b>GraphRAG — raw retrieval/generation outputs</b> — <span class="refdesc">All 45 items: model answers, retrieved contexts, matched entities, reasoning chains with edge claim IDs and confidence. Source for every worked-example citation in Section 4.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json" target="_blank" rel="noopener noreferrer">evaluation/graphrag/graphrag_ragas_inputs.json<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref10"><span class="refnum">[10]</span><span class="reftxt">
+          <b>Naive RAG — raw retrieval/generation outputs</b> — <span class="refdesc">All 45 items: model answers and retrieved contexts.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/naive_rag_ragas_inputs.json" target="_blank" rel="noopener noreferrer">evaluation/naive_rag/naive_rag_ragas_inputs.json<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+
+        <li id="ref11"><span class="refnum">[11]</span><span class="reftxt">
+          <b>GraphRAG — mechanical scores</b> — <span class="refdesc">Deterministic, no-LLM-judge metrics: node/citation recall &amp; precision, chain coverage, edge authenticity, overfetch.</span><br>
+          <a class="reflink" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_mechanical_scores.json" target="_blank" rel="noopener noreferrer">evaluation/graphrag/aeroops_graphrag_mechanical_scores.json<svg class="ext-icon" width="9" height="9" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#3D4A52" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#3D4A52" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">(opens on GitHub, in a new tab)</span></a>
+        </span></li>
+      </ol>
+    </section>
+
+    <footer>
+      AeroOps · Evaluation Report · Gold set frozen, judge-scored, mechanically audited.
+    </footer>
+  </main>
+</div>
+
+<script>
+// ---- scroll spy ----
+const links = document.querySelectorAll('nav a');
+const sections = Array.from(links).map(l => document.querySelector(l.getAttribute('href')));
+function onScroll(){
+  let idx = 0;
+  const y = window.scrollY + 140;
+  sections.forEach((s,i)=>{ if(s && s.offsetTop <= y) idx = i; });
+  links.forEach(l=>l.classList.remove('active'));
+  links[idx].classList.add('active');
+}
+window.addEventListener('scroll', onScroll);
+onScroll();
+
+// ---- Section 4 paired chart ----
+const pairData = [
+  ['factual_single_hop', 0.800, 0.833],
+  ['cross_document', 0.886, 0.811],
+  ['multi_hop_causal', 0.753, 0.651],
+  ['aggregation_fanout', 0.907, 0.644],
+  ['disambiguation', 0.952, 0.456],
+  ['operational_scenario', 0.488, 0.300],
+  ['provenance', 0.333, 0.833],
+];
+const pcBody = document.getElementById('pairchart-body');
+pairData.forEach(([cat,n,g])=>{
+  const row = document.createElement('div');
+  row.className = 'pc-row';
+  row.setAttribute('role','group');
+  row.setAttribute('aria-label', `${cat}: Naive RAG ${n.toFixed(3)}, GraphRAG ${g.toFixed(3)}`);
+  row.innerHTML = `
+    <span class="pc-label">${cat}</span>
+    <div class="pc-bars">
+      <div class="pc-row-label-row"><span>Naive</span><span>${n.toFixed(3)}</span></div>
+      <div class="pc-bar-track"><div class="pc-bar-fill naive" style="width:${Math.max(n*100,14)}%;"><span class="fillval">${n.toFixed(3)}</span></div></div>
+      <div class="pc-row-label-row" style="margin-top:4px;"><span>GraphRAG</span><span>${g.toFixed(3)}</span></div>
+      <div class="pc-bar-track"><div class="pc-bar-fill graph" style="width:${Math.max(g*100,14)}%;"><span class="fillval">${g.toFixed(3)}</span></div></div>
+    </div>`;
+  pcBody.appendChild(row);
+});
+
+// ---- Section 5 heatmap ----
+const heatCols = ['Node Recall','Node Precision','Citation Recall','Citation Precision','Chain Coverage','Edge Authenticity','Overfetch'];
+const heatRows = [
+  ['overall', 0.586, 0.369, 0.804, 0.711, 0.189, 1.0, 7.34],
+  ['aggregation_fanout', 0.425, 0.267, 0.861, 0.677, 0.111, 1.0, 5.53],
+  ['cross_document', 0.385, 0.251, 0.562, 0.550, 0.062, 1.0, 7.06],
+  ['disambiguation', 0.653, 0.518, 0.750, 0.800, null, 1.0, 6.58],
+  ['factual_single_hop', 0.778, 0.398, 1.000, 0.889, null, 1.0, 10.17],
+  ['multi_hop_causal', 0.646, 0.490, 0.812, 0.581, 0.375, 1.0, 6.38],
+  ['operational_scenario', 0.562, 0.299, 0.812, 0.729, null, 1.0, 7.00],
+  ['provenance', 0.833, 0.400, 1.000, 1.000, null, null, 11.00],
+];
+function heatColor(val, colIdx){
+  if(val===null) return 'transparent';
+  if(colIdx===6){
+    // Overfetch: higher = worse, and deliberately a DIFFERENT hue family
+    // (blue-gray, toward --steel) than the amber scale used for the other
+    // six columns -- those six run "lower = worse"; reusing the same warm
+    // ramp here would make a row unreadable at a glance (same color could
+    // mean "good" in one column and "bad" in the next). Distinct hue makes
+    // the inverted direction visually obvious, not just stated in prose.
+    const t = Math.min(val/12,1);
+    const r = 247 - t*110, g = 245 - t*95, b = 240 - t*40;
+    return `rgb(${r},${g},${b})`;
+  }
+  // 0-1 metrics: higher = better -> lighter is better, darker amber-ish is worse
+  const t = 1 - val;
+  const r = 247 - t*45, g = 245 - t*80, b = 240 - t*180;
+  return `rgb(${r},${g},${b})`;
+}
+const table = document.getElementById('heatmap');
+let caption = '<caption style="text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#3D4A52;padding-bottom:10px;">GraphRAG mechanical metrics by question category</caption>';
+let thead = '<tr><th scope="col">Category</th>' + heatCols.map(c=>`<th scope="col">${c}${c==='Overfetch' ? ' (lower better, separate scale)' : ''}</th>`).join('') + '</tr>';
+let tbody = '';
+heatRows.forEach(row=>{
+  const [cat, ...vals] = row;
+  tbody += `<tr><th scope="row" class="rowlabel">${cat}</th>`;
+  vals.forEach((v,i)=>{
+    if(v===null){ tbody += `<td class="na">—</td>`; }
+    else {
+      const display = i===6 ? v.toFixed(2)+'x' : v.toFixed(3);
+      tbody += `<td class="cell" style="background:${heatColor(v,i)};" title="${heatCols[i]}: ${display}"><span>${display}</span></td>`;
+    }
+  });
+  tbody += '</tr>';
+});
+table.innerHTML = caption + thead + tbody;
+</script>
+</body>
+</html>
