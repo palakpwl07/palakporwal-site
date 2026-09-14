@@ -1024,10 +1024,10 @@
 
 <div class="layout" id="tab-final" role="tabpanel" aria-labelledby="tabbtn-final" hidden>
   <nav id="rail2" aria-label="Final System sections">
-    <a href="#t1">RAGAS Demoted</a>
-    <a href="#t2">The Agentic Detour</a>
-    <a href="#t3">The Jury Harness</a>
-    <a href="#t4">Final Decision</a>
+    <a href="#t1">Final Decision</a>
+    <a href="#t2">RAGAS Demoted</a>
+    <a href="#t3">The Agentic Detour</a>
+    <a href="#t4">The Jury Harness</a>
     <a href="#t5">Net Result</a>
   </nav>
 
@@ -1045,8 +1045,71 @@
       <p class="bridge">↑ Builds on <a href="#s1" data-tab="eval">Evaluation → Methodology: Is the judge itself reliable?</a></p>
     </header>
 
-    <!-- T1: RAGAS DEMOTED -->
+    <!-- T1: FINAL DECISION -->
     <section id="t1">
+      <div class="section-head"><h2>Final Decision: GraphRAG Only</h2><span class="section-tag">CUT, NOT HIDDEN · REAL NUMBERS · SELF-HOSTED</span></div>
+
+      <div class="diagram">
+        <div class="arch-flow-lbl">BEFORE</div>
+        <div class="arch-flow" style="flex-wrap:wrap;">
+          <div class="arch-box">Query</div><div class="arch-arrow">→</div>
+          <div class="arch-box cut">structural_pattern_router.py</div><div class="arch-arrow">→</div>
+          <div class="arch-box cut">naive_rag.py<br><span style="font-size:9px;">FAISS · BM25 · embeddings</span></div>
+          <span style="padding:0 10px;font-size:11px;color:var(--steel);">or</span>
+          <div class="arch-box hi">GraphRAG</div>
+        </div>
+        <div class="arch-flow-lbl">AFTER</div>
+        <div class="arch-flow">
+          <div class="arch-box">Query</div><div class="arch-arrow">→</div>
+          <div class="arch-box hi">GraphRAG</div><div class="arch-arrow">→</div>
+          <div class="arch-box">Answer + citations</div>
+        </div>
+        <div class="cap">Router and naive's entire retrieval stack cut, not hidden — shown crossed out so the removal itself is visible, not just absent.</div>
+      </div>
+
+      <div class="callout limit">
+        <b>Cost of complexity, surfaced by the harness, not by router accuracy:</b> two real bugs in <code class="mono" style="font-size:12.5px;">naive_rag.py</code> — a <code class="mono" style="font-size:12.5px;">DOC_CONFIG</code> filename mismatch that left 2 of 7 documents with no title metadata in production<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/672fa9efb146ab2919754436612aa9d72b9410f9/naive_rag.py#L35" target="_blank" rel="noopener noreferrer">[T17]<span class="sr-only">(opens pre-fix naive_rag.py at the last commit before archiving, on GitHub)</span></a></sup>, and a page-number off-by-one that made <i>every</i> citation naive_rag.py ever showed a real user one page wrong.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/672fa9efb146ab2919754436612aa9d72b9410f9/naive_rag.py#L593" target="_blank" rel="noopener noreferrer">[T18]<span class="sr-only">(opens pre-fix naive_rag.py at the last commit before archiving, on GitHub)</span></a></sup>
+      </div>
+
+      <p style="font-size:14.5px;color:var(--steel);">One more bug worth naming, found separately: a retrieval bug in <code class="mono" style="font-size:12.5px;">graphretriever_v5.py</code>'s path-traversal logic could occasionally state two unrelated facts as if one caused the other — a structural co-occurrence edge narrated as a real causal link. Found and fixed before this simplification.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/graphretriever_v5.py#L66" target="_blank" rel="noopener noreferrer">[T19]<span class="sr-only">(opens the fix on GitHub)</span></a></sup></p>
+
+      <h3 style="font-size:17px;margin-top:36px;">GraphRAG alone, self-hosted, in production</h3>
+      <p style="font-size:14.5px;color:var(--steel);">Self-hosted Neo4j Community Edition, same EC2 instance as the app (replaces AuraDB free tier). Through the live public <code class="mono" style="font-size:12.5px;">/query</code> endpoint, cross-checked against LangSmith with zero mismatches. 1 of 45 (MH01) excluded — a pre-existing API-layer bug unrelated to retrieval quality. n=44.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/harness_runs/live_api_run_1789121032.json" target="_blank" rel="noopener noreferrer">[T21]<span class="sr-only">(opens the raw batch run on GitHub)</span></a></sup></p>
+
+      <div class="instrument-grid">
+        <div class="instrument-card">
+          <div class="iname">COST / QUERY (USD)</div>
+          <div class="instrument-stats">
+            <div class="istat mean"><div class="ival">$0.000106</div><div class="ilbl">Mean</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">$0.000103</div><div class="ilbl">Median</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">$0.000056</div><div class="ilbl">Min</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">$0.000180</div><div class="ilbl">Max</div></div>
+          </div>
+        </div>
+        <div class="instrument-card">
+          <div class="iname">GENERATION TIME (s)</div>
+          <div class="instrument-stats">
+            <div class="istat mean"><div class="ival">3.400</div><div class="ilbl">Mean</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">3.120</div><div class="ilbl">Median</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">1.290</div><div class="ilbl">Min</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">7.810</div><div class="ilbl">Max</div></div>
+          </div>
+        </div>
+        <div class="instrument-card">
+          <div class="iname">RETRIEVAL TIME (s)</div>
+          <div class="instrument-stats">
+            <div class="istat mean"><div class="ival">0.039</div><div class="ilbl">Mean</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">0.030</div><div class="ilbl">Median</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">0.010</div><div class="ilbl">Min</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">0.290</div><div class="ilbl">Max</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cap" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);margin-top:10px;">Retrieval under 0.1s for 42/44 items — app and Neo4j share one EC2 instance over a Docker bridge network, not the public internet.</div>
+    </section>
+
+    <!-- T2: RAGAS DEMOTED -->
+    <section id="t2">
       <div class="section-head"><h2>Why RAGAS Got Demoted, Not Rejected</h2><span class="section-tag">JUDGE INSTABILITY · STRUCTURAL BLINDNESS · REFUSAL ARTIFACT</span></div>
       <p class="lede">RAGAS wasn't thrown out — it was demoted from sole authority to one signal among several, once three separate, independently-diagnosed failure modes were understood.</p>
 
@@ -1143,8 +1206,8 @@
       <div class="callout">A refusal scored higher than a substantively correct, cited answer. Fixed in <code class="mono" style="font-size:12.5px;">router_ground_truth.json</code>'s labeling logic — if exactly one backend refuses, the other wins outright, RAGAS isn't consulted for that item. 9 of 45 labels flipped.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L32" target="_blank" rel="noopener noreferrer">[T10]</a></sup></div>
     </section>
 
-    <!-- T2: THE AGENTIC DETOUR -->
-    <section id="t2">
+    <!-- T3: THE AGENTIC DETOUR -->
+    <section id="t3">
       <div class="section-head"><h2>The Agentic Detour</h2><span class="section-tag">5 ROUNDS · A REASONABLE DECISION AT THE TIME</span></div>
       <p class="lede">The router's original target said naive won specific categories outright. Building a router in response was the right call given that evidence — the mistake would have been never revisiting it once better evidence arrived.</p>
 
@@ -1189,17 +1252,17 @@
             <text x="610" y="233" text-anchor="middle">pattern + default</text>
           </g>
         </svg>
-        <div class="callout breakin" style="top:20px;right:24px;">Built on a target later shown to be unreliable — see §T1.</div>
+        <div class="callout breakin" style="top:20px;right:24px;">Built on a target later shown to be unreliable — see §T2.</div>
         <div class="cap">Backend accuracy against <code class="mono" style="font-size:11px;">router_ground_truth.json</code>, by router design round.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L62" target="_blank" rel="noopener noreferrer">[T11]<span class="sr-only">(opens sourcing note on GitHub)</span></a></sup></div>
       </div>
 
-      <p style="margin-top:20px;">Round 2's entity count was diagnosed as an alias-inflation artifact of <code class="mono" style="font-size:13px;">ENTITY_MAP</code>, not a real property of the question. Round 3's comparison-language rule was 4/4 wrong as a standalone signal. Round 4 gained 10.6 points purely from fixing the refusal-artifact bug in the ground truth itself (§T1) — not from a better router. Round 5 dropped the semantic layer entirely after it returned a confident-looking match at similarity 0.07–0.19 on out-of-domain junk queries.</p>
+      <p style="margin-top:20px;">Round 2's entity count was diagnosed as an alias-inflation artifact of <code class="mono" style="font-size:13px;">ENTITY_MAP</code>, not a real property of the question. Round 3's comparison-language rule was 4/4 wrong as a standalone signal. Round 4 gained 10.6 points purely from fixing the refusal-artifact bug in the ground truth itself (§T2) — not from a better router. Round 5 dropped the semantic layer entirely after it returned a confident-looking match at similarity 0.07–0.19 on out-of-domain junk queries.</p>
 
-      <div class="callout limit">The 87.5% figure was scored against a target itself built from RAGAS Faithfulness/Context Recall comparisons — the same metric shown in §T1 to swing 0.667 points on identical input. A real number describing real router behavior against that specific target, measured before the target's own reliability had been independently stress-tested.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L76" target="_blank" rel="noopener noreferrer">[T12]<span class="sr-only">(opens sourcing note on GitHub)</span></a></sup></div>
+      <div class="callout limit">The 87.5% figure was scored against a target itself built from RAGAS Faithfulness/Context Recall comparisons — the same metric shown in §T2 to swing 0.667 points on identical input. A real number describing real router behavior against that specific target, measured before the target's own reliability had been independently stress-tested.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L76" target="_blank" rel="noopener noreferrer">[T12]<span class="sr-only">(opens sourcing note on GitHub)</span></a></sup></div>
     </section>
 
-    <!-- T3: THE JURY HARNESS -->
-    <section id="t3">
+    <!-- T4: THE JURY HARNESS -->
+    <section id="t4">
       <div class="section-head"><h2>The Jury Harness</h2><span class="section-tag">BLINDED · 3-MODEL MAJORITY VOTE · ANSWER QUALITY ONLY</span></div>
       <p class="lede">A panel of independent judges scoring by majority vote — the same principle behind "Panel of LLM evaluators" (PoLL) in evaluation literature<sup class="cite" style="opacity:.75;">†</sup> — reused this project's own established method: the gold set's <code class="mono" style="font-size:13px;">jury_agreement</code> field was itself built by 3-model majority vote (Opus 5, GPT-5.6, Qwen), reprised here to score naive/GraphRAG/agentic's answers, blinded, answer-quality only.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/jury_scoring/PROMPT.md" target="_blank" rel="noopener noreferrer">[T16]<span class="sr-only">(opens the jury prompt on GitHub)</span></a></sup></p>
 
@@ -1224,92 +1287,12 @@
       <p style="font-size:14.5px;color:var(--steel);">n=2 is small enough that a coin flip wouldn't be surprising as noise on its own — but it isn't contradicted by the larger sample, it's corroborated: naive's overall 0.511 vs. GraphRAG's 0.867 holds across all 45 items, not just the 2 the router sent its way.</p>
     </section>
 
-    <!-- T4: FINAL DECISION -->
-    <section id="t4">
-      <div class="section-head"><h2>Final Decision: GraphRAG Only</h2><span class="section-tag">CUT, NOT HIDDEN · REAL NUMBERS · SELF-HOSTED</span></div>
-
-      <div class="diagram">
-        <div class="arch-flow-lbl">BEFORE</div>
-        <div class="arch-flow" style="flex-wrap:wrap;">
-          <div class="arch-box">Query</div><div class="arch-arrow">→</div>
-          <div class="arch-box cut">structural_pattern_router.py</div><div class="arch-arrow">→</div>
-          <div class="arch-box cut">naive_rag.py<br><span style="font-size:9px;">FAISS · BM25 · embeddings</span></div>
-          <span style="padding:0 10px;font-size:11px;color:var(--steel);">or</span>
-          <div class="arch-box hi">GraphRAG</div>
-        </div>
-        <div class="arch-flow-lbl">AFTER</div>
-        <div class="arch-flow">
-          <div class="arch-box">Query</div><div class="arch-arrow">→</div>
-          <div class="arch-box hi">GraphRAG</div><div class="arch-arrow">→</div>
-          <div class="arch-box">Answer + citations</div>
-        </div>
-        <div class="cap">Router and naive's entire retrieval stack cut, not hidden — shown crossed out so the removal itself is visible, not just absent.</div>
-      </div>
-
-      <div class="callout limit">
-        <b>Cost of complexity, surfaced by the harness, not by router accuracy:</b> two real bugs in <code class="mono" style="font-size:12.5px;">naive_rag.py</code> — a <code class="mono" style="font-size:12.5px;">DOC_CONFIG</code> filename mismatch that left 2 of 7 documents with no title metadata in production<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/672fa9efb146ab2919754436612aa9d72b9410f9/naive_rag.py#L35" target="_blank" rel="noopener noreferrer">[T17]<span class="sr-only">(opens pre-fix naive_rag.py at the last commit before archiving, on GitHub)</span></a></sup>, and a page-number off-by-one that made <i>every</i> citation naive_rag.py ever showed a real user one page wrong.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/672fa9efb146ab2919754436612aa9d72b9410f9/naive_rag.py#L593" target="_blank" rel="noopener noreferrer">[T18]<span class="sr-only">(opens pre-fix naive_rag.py at the last commit before archiving, on GitHub)</span></a></sup>
-      </div>
-
-      <div class="example">
-        <div class="example-head">
-          <div class="exnum">CAUSAL-FABRICATION FIX</div>
-          <div class="exq"><code class="mono" style="font-size:13px;">graphretriever_v5.py</code>'s <code class="mono" style="font-size:13px;">retrieve_path()</code> — shortestPath traversal</div>
-        </div>
-        <div class="ex-row">
-          <div class="ex-sys">Before fix</div>
-          <div class="ex-ans">shortestPath matched ANY relationship type between two entities — including <code class="mono" style="font-size:12.5px;">MENTIONED_IN</code>/<code class="mono" style="font-size:12.5px;">HAS_CHUNK</code>: structural co-occurrence edges meaning only "appears in the same chunk," no <code class="mono" style="font-size:12.5px;">claim_id</code>, no asserted relationship. A traversal could surface that as if it were a real causal chain.</div>
-          <div class="ex-metric"><span class="mlbl">Edge type</span><span class="mval zero" style="font-size:12px;">co-occurrence</span></div>
-        </div>
-        <div class="ex-row">
-          <div class="ex-sys">After fix</div>
-          <div class="ex-ans">Restricted to real semantic edge types only — <code class="mono" style="font-size:12.5px;">CAUSES</code>, <code class="mono" style="font-size:12.5px;">LEADS_TO</code>, <code class="mono" style="font-size:12.5px;">MANIFESTS_AS</code>, etc. Exactly what <code class="mono" style="font-size:12.5px;">score_graphrag_mechanical.py</code>'s <code class="mono" style="font-size:12.5px;">edge_authenticity_rate</code> metric checks for.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/graphretriever_v5.py#L66" target="_blank" rel="noopener noreferrer">[T19]<span class="sr-only">(opens the fix on GitHub)</span></a></sup></div>
-          <div class="ex-metric"><span class="mlbl">Edge type</span><span class="mval high" style="font-size:12px;">real, sourced</span></div>
-        </div>
-        <div class="example-note">Fixed in commit <a class="cite" href="https://github.com/palakpwl07/AeroOps/commit/672fa9efb146ab2919754436612aa9d72b9410f9" target="_blank" rel="noopener noreferrer" style="font-family:'IBM Plex Mono',monospace;">672fa9e</a> — this predates the GraphRAG-only simplification, it did not follow it; corrected here rather than smoothed over.</div>
-      </div>
-
-      <h3 style="font-size:17px;margin-top:36px;">Real numbers — self-hosted Neo4j, live 44-item batch</h3>
-      <p style="font-size:14.5px;color:var(--steel);">Self-hosted Neo4j Community Edition, same EC2 instance as the app (replaces AuraDB free tier). Through the live public <code class="mono" style="font-size:12.5px;">/query</code> endpoint, cross-checked against LangSmith with zero mismatches. 1 of 45 (MH01) excluded — see §T5. n=44.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/harness_runs/live_api_run_1789121032.json" target="_blank" rel="noopener noreferrer">[T21]<span class="sr-only">(opens the raw batch run on GitHub)</span></a></sup></p>
-
-      <div class="instrument-grid">
-        <div class="instrument-card">
-          <div class="iname">COST / QUERY (USD)</div>
-          <div class="instrument-stats">
-            <div class="istat mean"><div class="ival">$0.000106</div><div class="ilbl">Mean</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">$0.000103</div><div class="ilbl">Median</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">$0.000056</div><div class="ilbl">Min</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">$0.000180</div><div class="ilbl">Max</div></div>
-          </div>
-        </div>
-        <div class="instrument-card">
-          <div class="iname">GENERATION TIME (s)</div>
-          <div class="instrument-stats">
-            <div class="istat mean"><div class="ival">3.400</div><div class="ilbl">Mean</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">3.120</div><div class="ilbl">Median</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">1.290</div><div class="ilbl">Min</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">7.810</div><div class="ilbl">Max</div></div>
-          </div>
-        </div>
-        <div class="instrument-card">
-          <div class="iname">RETRIEVAL TIME (s)</div>
-          <div class="instrument-stats">
-            <div class="istat mean"><div class="ival">0.039</div><div class="ilbl">Mean</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">0.030</div><div class="ilbl">Median</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">0.010</div><div class="ilbl">Min</div></div>
-            <div class="istat"><div class="ival" style="font-size:15px;">0.290</div><div class="ilbl">Max</div></div>
-          </div>
-        </div>
-      </div>
-      <div class="cap" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);margin-top:10px;">Retrieval under 0.1s for 42/44 items — app and Neo4j share one EC2 instance over a Docker bridge network, not the public internet.</div>
-    </section>
-
     <!-- T5: NET RESULT -->
     <section id="t5">
       <div class="section-head"><h2>Net Result</h2><span class="section-tag">DECISION RECORD</span></div>
       <div class="headline-box">
         <p style="margin:0;font-size:15.5px;">Naive RAG and the agentic router are gone from the live system. Three router designs were built, measured, and discarded in sequence as better evidence arrived — not reversed on a hunch. What's left is a single GraphRAG pipeline, verified end-to-end on infrastructure this project fully owns, with real per-query cost and latency pulled from an actual production run, not estimated.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L173" target="_blank" rel="noopener noreferrer">[T23]<span class="sr-only">(opens Net Result sourcing on GitHub)</span></a></sup></p>
       </div>
-      <p>One honest line on what's still open: item MH01 fails on a real, pre-existing API-layer bug — the live <code class="mono" style="font-size:13px;">/query</code> endpoint's response model requires a non-optional string answer<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/main.py#L134" target="_blank" rel="noopener noreferrer">[T22]<span class="sr-only">(opens the field definition on GitHub)</span></a></sup>, and one occasional null-content response from the model trips it into a 500 instead of a graceful degrade. Not fixed here — flagged as a follow-up, not omitted from the numbers.</p>
     </section>
 
     <footer>
