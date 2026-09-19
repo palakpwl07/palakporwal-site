@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeroOps — Final Architecture Decision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F5F0;
+    --ink:#1A1D1F;
+    --steel:#3D4A52;
+    --amber:#C4941F;
+    --signal:#8B3A3A;
+    --rule:#DCD5C4;
+    --rule-strong:#C9C0AA;
+    --paper-raised:#FCFBF8;
+    --green:#4C6B4F;
+    /* Text/graphic-safe amber: original --amber (2.54:1 on paper) fails WCAG AA
+       even at large-text size. This passes 4.5:1+ on both paper surfaces while
+       staying visibly the same gold/amber hue -- use for any amber TEXT or
+       small meaningful graphic (dots, icons); keep --amber for large fills/
+       borders where the contrast requirement doesn't apply the same way. */
+    --amber-ink:#8A6510;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Times New Roman',Times,Georgia,serif;
+    font-size:17px;
+    line-height:1.5;
+  }
+  h1,h2,h3{
+    font-family:'Times New Roman',Times,Georgia,serif;
+    font-weight:700;
+    margin:0 0 .3em 0;
+    letter-spacing:0;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:var(--steel);}
+  .layout{
+    display:grid;
+    grid-template-columns:220px minmax(0,880px);
+    justify-content:center;
+    gap:0 64px;
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  /* Author CSS always beats the browser's default [hidden]{display:none}
+     UA rule, regardless of selector specificity -- so .layout's own
+     `display:grid` above silently wins over `hidden` and the panel stays
+     visually on-screen even with the attribute correctly set. Confirmed
+     hitting this directly: JS toggling `hidden` reported the right state
+     while the old panel kept rendering. This rule is what actually does
+     the hiding. */
+  .layout[hidden]{display:none;}
+  /* ---- nav rail ---- */
+  nav{
+    position:sticky;
+    top:calc(48px + var(--switcher-h));
+    align-self:start;
+    padding-top:120px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  nav a{
+    text-decoration:none;
+    color:var(--steel);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:0.02em;
+    padding:10px 8px 10px 14px;
+    border-left:2px solid var(--rule);
+    transition:border-color .15s ease, color .15s ease;
+  }
+  nav a:hover{color:var(--ink);border-left-color:var(--steel);}
+  nav a.active{color:var(--ink);border-left-color:var(--amber);font-weight:500;}
+  nav a:focus-visible{outline:2px solid var(--steel);outline-offset:2px;}
+  .skip-link{
+    position:absolute;left:-9999px;top:0;
+    background:var(--ink);color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;font-size:13px;
+    padding:10px 16px;z-index:100;
+  }
+  .skip-link:focus{left:12px;top:12px;}
+
+  /* ---- page switcher ----
+     Sticky strip at the very top linking the two AeroOps report pages.
+     --switcher-h is read by nav's own sticky offset below (desktop and
+     mobile) so the two stick in a clean stack instead of overlapping. */
+  :root{ --switcher-h:47px; }
+  .tabswitch-wrap{
+    position:sticky; top:0; z-index:30;
+    background:var(--paper);
+    border-bottom:1px solid var(--rule-strong);
+  }
+  .tabswitch{
+    max-width:1180px; margin:0 auto; padding:0 24px;
+    display:flex; gap:14px; height:var(--switcher-h); align-items:stretch;
+  }
+  .tabswitch a{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    color:var(--steel); letter-spacing:0.02em; text-decoration:none;
+    padding:0 4px; border-bottom:2px solid transparent;
+    display:flex; align-items:center;
+  }
+  .tabswitch a:hover{color:var(--ink);}
+  .tabswitch a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--amber);font-weight:500;}
+  .tabswitch a:focus-visible{outline:2px solid var(--steel);outline-offset:-2px;}
+  .tabswitch .sep{color:var(--rule-strong);display:flex;align-items:center;}
+
+  /* ---- hero ---- */
+  header.hero{
+    padding:96px 0 56px 0;
+    max-width:880px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--steel);
+    margin-bottom:18px;
+  }
+  header.hero h1{
+    font-size:44px;
+    line-height:1.12;
+    max-width:11.5em;
+  }
+  header.hero .sub{
+    font-size:17px;
+    color:var(--steel);
+    max-width:34em;
+    margin-top:18px;
+  }
+  .hero-stats{
+    display:flex;
+    gap:40px;
+    margin-top:40px;
+    flex-wrap:wrap;
+  }
+  .hero-stat .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:30px;
+    font-weight:500;
+    color:var(--amber-ink);
+  }
+  .hero-stat .lbl{
+    font-size:12.5px;
+    color:var(--steel);
+    margin-top:2px;
+  }
+
+  section{
+    padding:44px 0;
+    border-top:1px solid var(--rule);
+    max-width:880px;
+  }
+  section:first-of-type{border-top:none;}
+  /* Every section's own trailing content (.callout, .diagram, .example,
+     .status-strip, etc) previously carried its own ad-hoc bottom margin,
+     so the effective gap before the next section ranged 64-100px
+     depending on what happened to end that section. One rule, one
+     number: the 64px section padding is the only thing that controls
+     the gap now. */
+  section > *:last-child{margin-bottom:0;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:28px;
+  }
+  .section-head h2{font-size:26px;}
+  .section-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--steel);
+    white-space:nowrap;
+  }
+  p{max-width:66ch;}
+  .lede{font-size:16.5px;color:#2B2E30;}
+
+  /* ---- diagram box ---- */
+  .diagram{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:28px 24px;
+    margin:24px 0;
+  }
+  .diagram svg{display:block;width:100%;height:auto;}
+  .diagram .cap{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--steel);
+    margin-top:12px;
+  }
+
+  /* ---- caveat / callout ---- */
+  .callout{
+    border-left:2px solid var(--amber);
+    padding:12px 18px;
+    background:rgba(196,148,31,0.06);
+    font-size:14.5px;
+    color:var(--steel);
+    margin:20px 0;
+    max-width:64ch;
+  }
+  .callout.limit{border-left-color:var(--signal);background:rgba(139,58,58,0.05);}
+
+  /* ---- pipeline diagram (section 1) ----
+     Grid, not flex-wrap: a 4-step sequence needs deterministic layout.
+     flex-wrap silently reflowed the 4th node onto a new row with no
+     connecting arrow whenever the four (very unequal-width) nodes didn't
+     fit one line -- viewport-width-dependent breakage. Equal-width grid
+     columns fix the "uneven box sizes" look too; if it still doesn't fit
+     a narrow screen, .pipeline-wrap scrolls horizontally instead of
+     wrapping into a broken second row -- same convention already used
+     for the heatmap table and the mobile nav strip. */
+  .pipeline-wrap{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:28px 24px;
+    margin:24px 0;
+    overflow-x:auto;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:minmax(150px,1fr) 32px minmax(150px,1fr) 32px minmax(150px,1fr) 32px minmax(150px,1fr);
+    align-items:stretch;
+    min-width:720px;
+  }
+  .pipe-node{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    border:1px solid var(--steel);
+    padding:10px 14px;
+    background:var(--paper);
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .pipe-node .n{font-size:15px;font-weight:500;color:var(--ink);}
+  .pipe-node .d{color:var(--steel);font-size:11px;margin-top:2px;}
+  .pipe-arrow{color:var(--steel);font-size:16px;text-align:center;}
+
+  /* ---- bar rows (category breakdown) ---- */
+  .barlist{margin:20px 0;}
+  .barrow{display:grid;grid-template-columns:150px 1fr 46px;align-items:center;gap:12px;padding:6px 0;}
+  .barrow .lbl{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel);}
+  .barrow .track{background:var(--rule);height:8px;position:relative;}
+  .barrow .fill{background:var(--steel);height:8px;position:absolute;left:0;top:0;}
+  .barrow .val{font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;}
+
+  /* dot plot for judge stability */
+  .dotplot{margin:24px 0;}
+  .dotrow{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--rule);}
+  .dotrow:last-child{border-bottom:none;}
+  .dotrow .lbl{font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .dottrack{position:relative;height:24px;background:linear-gradient(90deg,transparent,transparent);}
+  .dottrack .axis{position:absolute;left:0;right:0;top:50%;height:1px;background:var(--rule-strong);}
+  .dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid var(--paper);}
+  .dot.r1{background:var(--steel);}
+  .dot.r2{background:var(--amber-ink);}
+  .dot.r3{background:var(--ink);}
+  .dotplot-legend{display:flex;gap:18px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);margin-top:6px;}
+  .dotplot-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dotplot-legend i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .dot-axis-labels{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--steel);margin-top:2px;}
+  .dot-values{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--steel);margin-top:4px;}
+
+  /* ---- arch diagrams naive/graph ---- */
+  .arch-flow{display:flex;align-items:center;flex-wrap:wrap;gap:0;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .arch-box{border:1px solid var(--steel);padding:9px 13px;background:var(--paper);text-align:center;}
+  .arch-box.hi{border-color:var(--amber);color:var(--amber-ink);font-weight:500;}
+  .arch-arrow{padding:0 8px;color:var(--steel);}
+  .branch{display:flex;flex-direction:column;gap:8px;margin:10px 0;padding-left:28px;border-left:1px dashed var(--rule-strong);}
+
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;}
+  .metric-card{background:var(--paper-raised);border:1px solid var(--rule);padding:20px;}
+  .metric-card .big{font-family:'IBM Plex Mono',monospace;font-size:34px;color:var(--steel);}
+  .metric-card .big.graph{color:var(--amber-ink);}
+  .metric-card .big.good{color:var(--green);}
+  .metric-card .lbl{font-size:12.5px;color:var(--steel);margin-top:4px;}
+
+  /* ---- section 4 paired chart ---- */
+  .pairchart{margin:28px 0;}
+  .pc-row{display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center;padding:9px 0;}
+  .pc-cats{display:flex;flex-direction:column;}
+  .pc-label{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);margin-bottom:5px;}
+  .pc-bars{display:flex;flex-direction:column;gap:3px;}
+  .pc-bar-track{background:var(--rule);height:14px;position:relative;}
+  .pc-bar-fill{height:14px;position:absolute;left:0;top:0;display:flex;align-items:center;}
+  .pc-bar-fill.naive{background:var(--steel);}
+  .pc-bar-fill.graph{
+    background:repeating-linear-gradient(135deg,var(--amber) 0 4px,#B0821A 4px 8px);
+  }
+  .pc-bar-fill .fillval{
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--paper);
+    padding-left:5px;white-space:nowrap;
+  }
+  .pc-row-label-row{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--steel);margin-bottom:2px;}
+  .pairchart-legend{display:flex;gap:20px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);margin:14px 0 6px 0;}
+  .pairchart-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .pairchart-legend i{width:14px;height:10px;display:inline-block;}
+  .pairchart-legend i.naive{background:var(--steel);}
+  .pairchart-legend i.graph{background:repeating-linear-gradient(135deg,var(--amber) 0 4px,#B0821A 4px 8px);}
+
+  /* ---- worked examples ---- */
+  .example{margin:36px 0;border:1px solid var(--rule);}
+  .example-head{padding:16px 20px;border-bottom:1px solid var(--rule);background:var(--paper-raised);}
+  .example-head .exnum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber-ink);font-weight:500;}
+  .example-head .exq{font-size:15px;margin-top:6px;}
+  .example-head .exgold{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel);margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);}
+  .ex-row{display:grid;grid-template-columns:110px 1fr 90px 90px;gap:16px;padding:16px 20px;border-bottom:1px solid var(--rule);align-items:start;}
+  .ex-row:last-child{border-bottom:none;}
+  .ex-sys{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel);padding-top:2px;}
+  .ex-ans{font-size:14px;}
+  .ex-metric{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;}
+  .ex-metric .mlbl{display:block;font-size:9.5px;color:var(--steel);letter-spacing:0.03em;margin-bottom:2px;}
+  .ex-metric .mval{font-size:16px;}
+  .ex-metric .mval.zero{color:var(--signal);}
+  .ex-metric .mval.high{color:var(--green);}
+
+  /* ---- in-text citations (research-paper style, link to raw source on GitHub) ---- */
+  sup.cite{font-size:0.68em;}
+  a.cite{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--amber-ink);
+    text-decoration:none;
+    padding:0 1px;
+  }
+  a.cite:hover{text-decoration:underline;}
+  a.cite:focus-visible{outline:2px solid var(--steel);outline-offset:1px;}
+
+  .edge-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    background:rgba(196,148,31,0.09);
+    border:1px solid rgba(196,148,31,0.4);
+    padding:6px 10px;
+    margin-top:10px;
+    color:#7A5C15;
+    text-decoration:none;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  a.edge-tag:hover{background:rgba(196,148,31,0.17);border-color:rgba(196,148,31,0.65);}
+  a.edge-tag:focus-visible{outline:2px solid var(--steel);outline-offset:2px;}
+  .edge-tag .ext-icon{flex:0 0 auto;display:block;opacity:.7;}
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+  .example-note{padding:14px 20px;font-size:13.5px;color:var(--steel);background:var(--paper);}
+
+  /* ---- references ---- */
+  .reflist{list-style:none;margin:24px 0 0 0;padding:0;}
+  .reflist li{
+    display:grid;grid-template-columns:34px 1fr;gap:14px;
+    padding:12px 0;border-bottom:1px solid var(--rule);font-size:14px;
+  }
+  .reflist li:last-child{border-bottom:none;}
+  .refnum{font-family:'IBM Plex Mono',monospace;color:var(--amber-ink);font-weight:500;font-size:13px;}
+  .reftxt b{font-weight:600;}
+  .reftxt .refdesc{color:#2B2E30;}
+  .reflink{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);
+    text-decoration:none;display:inline-flex;align-items:center;gap:5px;
+    margin-top:4px;
+  }
+  .reflink:hover{text-decoration:underline;}
+  .reflink:focus-visible{outline:2px solid var(--steel);outline-offset:1px;}
+  .reflink .ext-icon{flex:0 0 auto;opacity:.7;}
+
+  /* ---- heatmap ---- */
+  .heatmap-wrap{overflow-x:auto;margin:24px 0;}
+  table.heatmap{border-collapse:collapse;width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  table.heatmap th{
+    font-weight:500;text-align:left;padding:8px 10px;
+    font-size:11px;color:var(--steel);border-bottom:1px solid var(--rule-strong);
+    white-space:nowrap;
+  }
+  table.heatmap td{padding:9px 10px;text-align:center;border-bottom:1px solid var(--rule);position:relative;}
+  table.heatmap th.rowlabel{
+    text-align:left;color:var(--ink);white-space:nowrap;
+    font-weight:500;padding:9px 10px;border-bottom:1px solid var(--rule);
+  }
+  table.heatmap caption{caption-side:top;}
+  table.heatmap td.cell{cursor:default;}
+  table.heatmap td.cell span{position:relative;z-index:1;}
+  table.heatmap td.na{color:var(--rule-strong);}
+  .glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;margin-top:24px;}
+  .gloss-item{font-size:13px;}
+  .gloss-item b{font-family:'IBM Plex Mono',monospace;font-size:12.5px;display:block;margin-bottom:2px;}
+
+  /* ---- takeaway ---- */
+  .headline-box{
+    border:1px solid var(--ink);
+    padding:24px 26px;
+    margin-bottom:28px;
+  }
+  .status-strip{margin:24px 0;}
+  .status-row{
+    display:grid;grid-template-columns:100px 1fr;gap:16px;
+    padding:12px 0;border-bottom:1px solid var(--rule);
+  }
+  .status-row:last-child{border-bottom:none;}
+  .status-pill{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+    padding:3px 9px;border:1px solid;align-self:start;
+    text-align:center;height:fit-content;
+  }
+  .status-pill.open{color:var(--signal);border-color:var(--signal);}
+  .status-pill.partial{color:var(--amber-ink);border-color:var(--amber-ink);}
+  .status-row .txt{font-size:14px;}
+  .status-row .txt b{font-weight:600;}
+
+  footer{
+    padding:48px 0 96px 0;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--steel);
+    max-width:880px;
+  }
+
+  /* ---- Tab 2: bridge line ---- */
+  .bridge{
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--steel);
+    padding:20px 0 0 0;max-width:880px;
+  }
+  .bridge a{color:var(--amber-ink);text-decoration:none;}
+  .bridge a:hover{text-decoration:underline;}
+
+  /* ---- Tab 2 s1: featured dot row (AF03 -- largest single-item swing) ---- */
+  .dotrow.featured{
+    border:1px solid var(--signal);
+    background:rgba(139,58,58,0.045);
+    padding:10px 14px;
+    margin:4px 0;
+  }
+  .dotrow.featured .lbl b{color:var(--signal);}
+  .swing-badge{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+    color:var(--signal);border:1px solid var(--signal);padding:2px 7px;
+    letter-spacing:0.03em;margin-top:4px;
+  }
+
+  /* ---- Tab 2 s1: refusal-artifact side-by-side pair ---- */
+  .refusal-pair{
+    display:grid;grid-template-columns:1fr 1fr;gap:1px;
+    background:var(--rule);border:1px solid var(--rule);margin:24px 0;
+  }
+  .rp-cell{background:var(--paper-raised);padding:18px 20px;}
+  .rp-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .rp-sys{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);letter-spacing:0.03em;}
+  .rp-faith{font-family:'IBM Plex Mono',monospace;font-size:20px;}
+  .rp-faith.high{color:var(--signal);}
+  .rp-faith.zero{color:var(--signal);}
+  .rp-faith-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--steel);display:block;text-align:right;}
+  .rp-ans{font-size:13.5px;}
+  .rp-cell.win{border-top:2px solid var(--amber);}
+
+  /* ---- Tab 2 s2: router-round line chart ---- */
+  .linechart-wrap{background:var(--paper-raised);border:1px solid var(--rule);border-radius:2px;padding:28px 24px;margin:24px 0;position:relative;}
+  .callout.breakin{
+    position:absolute;
+    border:1.5px dashed var(--amber);
+    background:var(--paper-raised);
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    color:var(--amber-ink);padding:10px 14px;max-width:190px;margin:0;
+  }
+
+  /* ---- Tab 2 s3: paired chart, single combined bar variant ---- */
+  .pc-bar-fill.combined{background:repeating-linear-gradient(135deg,var(--amber) 0 4px,#B0821A 4px 8px);}
+  .pc-combined-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--amber-ink);margin-left:8px;}
+
+  /* ---- Tab 2 s3: n=2 tie callout (its own visual space) ---- */
+  .tie-callout{
+    border:1px solid var(--ink);
+    padding:22px 24px;margin:28px 0;
+    display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;
+  }
+  .tie-callout .tie-num{font-family:'IBM Plex Mono',monospace;font-size:40px;color:var(--amber-ink);line-height:1;}
+  .tie-callout .tie-num-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--steel);text-align:center;margin-top:4px;}
+  .tie-callout .tie-txt{font-size:14.5px;}
+  .tie-callout .tie-txt b{font-weight:600;}
+
+  /* ---- metric grid, 3-column variant (s3 correct-rate cards) ---- */
+  .metric-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:20px;}
+
+  /* ---- Tab 2 s4: before/after arch diagram, cut boxes ---- */
+  .arch-box.cut{
+    color:var(--rule-strong);border-color:var(--rule-strong);
+    text-decoration:line-through;background:repeating-linear-gradient(135deg,var(--paper) 0 6px,var(--rule) 6px 7px);
+  }
+  .arch-flow-lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--steel);letter-spacing:0.05em;text-transform:uppercase;margin:18px 0 6px;}
+  .arch-flow-lbl:first-child{margin-top:0;}
+
+  /* ---- instrument-readout cards (production metrics) ---- */
+  .instrument-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:20px;}
+  .instrument-card{background:var(--paper-raised);border:1px solid var(--rule);padding:18px 18px 16px;}
+  .instrument-card .iname{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);margin-bottom:12px;}
+  .instrument-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+  .istat .ival{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--amber-ink);}
+  .istat.mean .ival{font-size:22px;}
+  .istat .ilbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--steel);text-transform:uppercase;letter-spacing:0.03em;margin-top:2px;}
+
+  @media (max-width:920px){
+    /* minmax(0,1fr), not bare 1fr -- a bare 1fr track's minimum size is its
+       content's min-content width (CSS Grid default), so wide children
+       (the pipeline diagram, SVG, etc) blow the grid past the viewport
+       instead of shrinking. This is the same reason the desktop rule uses
+       minmax(0,880px) instead of a plain max-width. */
+    .layout{grid-template-columns:minmax(0,1fr);padding:0;}
+    /* Nav rail becomes a horizontal, sticky, scrollable tab strip instead of
+       disappearing -- the page has 7 sections and no other way to jump
+       between them, so removing navigation entirely on mobile/tablet left
+       no way to move around except manual scrolling. */
+    nav{
+      display:flex;flex-direction:row;gap:0;
+      position:sticky;top:var(--switcher-h);z-index:20;
+      padding:0 20px;
+      background:var(--paper);
+      border-bottom:1px solid var(--rule);
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      white-space:nowrap;
+    }
+    nav a{
+      border-left:none;border-bottom:2px solid var(--rule);
+      padding:14px 12px;
+      flex:0 0 auto;
+    }
+    nav a:hover{border-left:none;border-bottom-color:var(--steel);}
+    nav a.active{border-left:none;border-bottom-color:var(--amber);}
+    main{padding:0 20px;}
+    section, header.hero{max-width:100%;}
+    section{padding:32px 0;}
+    header.hero{padding-top:32px;}
+    header.hero h1{font-size:32px;}
+    .metric-grid{grid-template-columns:1fr;}
+    .ex-row{grid-template-columns:1fr;}
+    .ex-metric{text-align:left;}
+    .glossary{grid-template-columns:1fr;}
+    .tabswitch{padding:0 20px;}
+    .refusal-pair{grid-template-columns:1fr;}
+    .metric-grid-3{grid-template-columns:1fr;}
+    .instrument-grid{grid-template-columns:1fr;}
+    .tie-callout{grid-template-columns:1fr;text-align:left;}
+    .tie-callout .tie-num{font-size:32px;}
+    .callout.breakin{position:static;max-width:100%;margin-top:14px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="tabswitch-wrap">
+  <div class="tabswitch" role="group" aria-label="AeroOps reports">
+    <a href="../aeroops-evaluation/">Naive RAG vs GraphRAG Evaluation</a>
+    <span class="sep">/</span>
+    <a href="../aeroops-final-architecture/" aria-current="page">Final Architecture Decision</a>
+  </div>
+</div>
+
+<div class="layout" id="tab-final">
+  <nav id="rail2" aria-label="Final Architecture sections">
+    <a href="#t1">Final Decision</a>
+    <a href="#t2">RAGAS Demoted</a>
+    <a href="#t3">The Agentic Detour</a>
+    <a href="#t4">The Jury Harness</a>
+    <a href="#t5">Net Result</a>
+  </nav>
+
+  <main id="main">
+    <header class="hero">
+      <div class="eyebrow">FINAL ARCHITECTURE DECISION — HOW THREE ARCHITECTURE DECISIONS GOT MADE, IN ORDER</div>
+      <h1>Naive RAG, a router, three dead-end router designs — cut, one at a time, as better evidence arrived.</h1>
+      <p class="sub">The Naive RAG vs GraphRAG evaluation exposed RAGAS's blind spots. This is what happened after: the router built on top of it, the jury harness that replaced it, and the GraphRAG-only system that came out the other side.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="num">87.5%</div><div class="lbl">final router accuracy — on a target later shown unreliable</div></div>
+        <div class="hero-stat"><div class="num">0.867</div><div class="lbl">GraphRAG = Agentic, jury-scored</div></div>
+        <div class="hero-stat"><div class="num">21/45</div><div class="lbl">naive refusals, independently re-verified</div></div>
+        <div class="hero-stat"><div class="num">$0.000106</div><div class="lbl">mean cost / query, live 44-item batch</div></div>
+      </div>
+      <p class="bridge">↑ Builds on <a href="../aeroops-evaluation/#s1">Naive RAG vs GraphRAG Evaluation → Methodology: Is the judge itself reliable?</a></p>
+    </header>
+
+    <!-- T1: FINAL DECISION -->
+    <section id="t1">
+      <div class="section-head"><h2>Final Decision: GraphRAG Only</h2><span class="section-tag">CUT, NOT HIDDEN · REAL NUMBERS · SELF-HOSTED</span></div>
+
+      <p style="margin:0 0 20px;font-size:15.5px;"><a href="http://100.53.229.19:8000/" target="_blank" rel="noopener noreferrer">Try the final AeroOps system →<span class="sr-only">(opens the live AeroOps app in a new tab)</span></a></p>
+
+      <div class="diagram">
+        <div class="arch-flow-lbl">BEFORE</div>
+        <div class="arch-flow" style="flex-wrap:wrap;">
+          <div class="arch-box">Query</div><div class="arch-arrow">→</div>
+          <div class="arch-box cut">structural_pattern_router.py</div><div class="arch-arrow">→</div>
+          <div class="arch-box cut">naive_rag.py<br><span style="font-size:9px;">FAISS · BM25 · embeddings</span></div>
+          <span style="padding:0 10px;font-size:11px;color:var(--steel);">or</span>
+          <div class="arch-box hi">GraphRAG</div>
+        </div>
+        <div class="arch-flow-lbl">AFTER</div>
+        <div class="arch-flow">
+          <div class="arch-box">Query</div><div class="arch-arrow">→</div>
+          <div class="arch-box hi">GraphRAG</div><div class="arch-arrow">→</div>
+          <div class="arch-box">Answer + citations</div>
+        </div>
+        <div class="cap">Router and naive's entire retrieval stack cut, not hidden — shown crossed out so the removal itself is visible, not just absent.</div>
+      </div>
+
+      <div class="callout limit">
+        <b>Cost of complexity, surfaced by the harness, not by router accuracy:</b> two real bugs in <code class="mono" style="font-size:12.5px;">naive_rag.py</code> — a <code class="mono" style="font-size:12.5px;">DOC_CONFIG</code> filename mismatch that left 2 of 7 documents with no title metadata in production<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/672fa9efb146ab2919754436612aa9d72b9410f9/naive_rag.py#L35" target="_blank" rel="noopener noreferrer">[T17]<span class="sr-only">(opens pre-fix naive_rag.py at the last commit before archiving, on GitHub)</span></a></sup>, and a page-number off-by-one that made <i>every</i> citation naive_rag.py ever showed a real user one page wrong.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/672fa9efb146ab2919754436612aa9d72b9410f9/naive_rag.py#L593" target="_blank" rel="noopener noreferrer">[T18]<span class="sr-only">(opens pre-fix naive_rag.py at the last commit before archiving, on GitHub)</span></a></sup>
+      </div>
+
+      <p style="font-size:14.5px;color:var(--steel);">One more bug worth naming, found separately: a retrieval bug in <code class="mono" style="font-size:12.5px;">graphretriever_v5.py</code>'s path-traversal logic could occasionally state two unrelated facts as if one caused the other — a structural co-occurrence edge narrated as a real causal link. Found and fixed before this simplification.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/graphretriever_v5.py#L66" target="_blank" rel="noopener noreferrer">[T19]<span class="sr-only">(opens the fix on GitHub)</span></a></sup></p>
+
+      <h3 style="font-size:17px;margin-top:36px;">GraphRAG alone, self-hosted, in production</h3>
+      <p style="font-size:14.5px;color:var(--steel);">Self-hosted Neo4j Community Edition, same EC2 instance as the app (replaces AuraDB free tier). Through the live public <code class="mono" style="font-size:12.5px;">/query</code> endpoint, cross-checked against LangSmith with zero mismatches. 1 of 45 (MH01) excluded — a pre-existing API-layer bug unrelated to retrieval quality. n=44.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/harness_runs/live_api_run_1789121032.json" target="_blank" rel="noopener noreferrer">[T21]<span class="sr-only">(opens the raw batch run on GitHub)</span></a></sup></p>
+
+      <div class="instrument-grid">
+        <div class="instrument-card">
+          <div class="iname">COST / QUERY (USD)</div>
+          <div class="instrument-stats">
+            <div class="istat mean"><div class="ival">$0.000106</div><div class="ilbl">Mean</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">$0.000103</div><div class="ilbl">Median</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">$0.000056</div><div class="ilbl">Min</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">$0.000180</div><div class="ilbl">Max</div></div>
+          </div>
+        </div>
+        <div class="instrument-card">
+          <div class="iname">GENERATION TIME (s)</div>
+          <div class="instrument-stats">
+            <div class="istat mean"><div class="ival">3.400</div><div class="ilbl">Mean</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">3.120</div><div class="ilbl">Median</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">1.290</div><div class="ilbl">Min</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">7.810</div><div class="ilbl">Max</div></div>
+          </div>
+        </div>
+        <div class="instrument-card">
+          <div class="iname">RETRIEVAL TIME (s)</div>
+          <div class="instrument-stats">
+            <div class="istat mean"><div class="ival">0.039</div><div class="ilbl">Mean</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">0.030</div><div class="ilbl">Median</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">0.010</div><div class="ilbl">Min</div></div>
+            <div class="istat"><div class="ival" style="font-size:15px;">0.290</div><div class="ilbl">Max</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cap" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);margin-top:10px;">Retrieval under 0.1s for 42/44 items — app and Neo4j share one EC2 instance over a Docker bridge network, not the public internet.</div>
+    </section>
+
+    <!-- T2: RAGAS DEMOTED -->
+    <section id="t2">
+      <div class="section-head"><h2>Why RAGAS Got Demoted, Not Rejected</h2><span class="section-tag">JUDGE INSTABILITY · STRUCTURAL BLINDNESS · REFUSAL ARTIFACT</span></div>
+      <p class="lede">RAGAS wasn't thrown out — it was demoted from sole authority to one signal among several, once three separate, independently-diagnosed failure modes were understood.</p>
+
+      <h3 style="font-size:17px;margin-top:8px;">The largest single-item swing in the dataset</h3>
+      <p>Same identical answer, scored three times, nothing regenerated between runs.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/ragas_outputs_graphrag/first%20run/aeroops_graphrag_ragas_results.json#L2850" target="_blank" rel="noopener noreferrer">[T1]<span class="sr-only">(opens run 1 record on GitHub)</span></a></sup><sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/ragas_outputs_graphrag/2nd%20run/aeroops_graphrag_ragas_results.json#L2850" target="_blank" rel="noopener noreferrer">[T2]</a></sup><sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/ragas_outputs_graphrag/3rd%20run/aeroops_graphrag_ragas_results.json#L2850" target="_blank" rel="noopener noreferrer">[T3]</a></sup></p>
+
+      <div class="dotplot">
+        <div class="dotrow featured">
+          <span class="lbl"><b>AF03</b><br>Faithfulness<br><span class="swing-badge">0.667 SWING · LARGEST IN DATASET</span></span>
+          <div>
+            <div class="dottrack"><div class="axis"></div>
+              <div class="dot r1" style="left:0%;" title="Run 1: 0.0"></div>
+              <div class="dot r2" style="left:66.7%;" title="Run 2: 0.667"></div>
+              <div class="dot r3" style="left:0%;" title="Run 3: 0.0"></div>
+            </div>
+            <div class="dot-axis-labels" aria-hidden="true"><span>0.0</span><span>0.5</span><span>1.0</span></div>
+            <div class="dot-values">Run 1: 0.0 &nbsp;·&nbsp; Run 2: 0.667 &nbsp;·&nbsp; Run 3: 0.0</div>
+          </div>
+        </div>
+      </div>
+      <div class="dotplot-legend">
+        <span><i style="background:#3D4A52;"></i>Run 1</span>
+        <span><i style="background:#8A6510;"></i>Run 2</span>
+        <span><i style="background:#1A1D1F;"></i>Run 3</span>
+      </div>
+      <div class="callout">"Fuel starvation or interruption, compressor surge or stall, and fuel-filter clogging are the distinct root causes that can lead to an engine flameout" — cites 3 evidence chunks, matches gold ground truth. Byte-identical across all 3 runs. The score is not the answer's fault.</div>
+
+      <h3 style="font-size:17px;margin-top:36px;">Structural blindness to graph-verified multi-hop claims</h3>
+      <p>RAGAS Faithfulness checks whether a claim traces to one literal chunk of retrieved text. It has no visibility into the graph traversal that actually backs a multi-hop claim.</p>
+
+      <div class="example">
+        <div class="example-head">
+          <div class="exnum">MH03</div>
+          <div class="exq">How could the failure of a single fuel tank boost pump potentially cause a multiple-engine flameout?</div>
+          <div class="exgold">GOLD: The boost pump failure can generate debris that clogs the fuel filter. Once clogged, disrupted fuel flow or contamination bypassing the filter introduces the potential for a multiple-engine flameout.</div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">GraphRAG</div>
+          <div class="ex-ans">
+            "A failure of one fuel-tank boost pump can generate debris that clogs the fuel filter, which in turn can cause fuel starvation and lead to flameout. Because the filter feeds multiple engines, a single pump failure can precipitate a flameout in more than one engine."
+            <a class="edge-tag" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json#L738" target="_blank" rel="noopener noreferrer">
+              CAUSES · claim CL051 · conf 0.8 · D3_c29  →  LEADS_TO · claim CL052 · conf 0.75 · D3_c30
+              <svg class="ext-icon" width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#7A5C15" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#7A5C15" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="sr-only">(opens raw evaluation record for MH03 on GitHub)</span>
+            </a>
+          </div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval zero">0.0</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval">0.5</span></div>
+        </div>
+        <div class="example-note">Two real, individually-sourced graph edges, chained correctly, cited inline. Scored 0.0 because no single passage states the full chain in one sentence — RAGAS can't credit a synthesis it never sees the structure of.</div>
+      </div>
+
+      <div class="example">
+        <div class="example-head">
+          <div class="exnum">OS08</div>
+          <div class="exq">In flight, the pilot notices brief fluctuations in EPR and EGT, but the engine continues running normally because the continuous ignition system activated automatically. What event did the ignition system prevent?</div>
+          <div class="exgold">GOLD: It prevented a total flameout by automatically restarting combustion after unstable engine operation or a temporary fuel interruption.</div>
+        </div>
+        <div class="ex-row">
+          <div class="ex-sys">GraphRAG</div>
+          <div class="ex-ans">
+            "The continuous ignition prevented a flameout."
+            <a class="edge-tag" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json#L4309" target="_blank" rel="noopener noreferrer">
+              MITIGATES · claim CL033 · conf 0.85 · D3_c12  ·  LEADS_TO · claim CL030 · conf 0.8 · D3_c09
+              <svg class="ext-icon" width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 2H2v12h12v-4" stroke="#7A5C15" stroke-width="1.3"/><path d="M9 2h5v5M14 2 7 9" stroke="#7A5C15" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="sr-only">(opens raw evaluation record for OS08 on GitHub)</span>
+            </a>
+          </div>
+          <div class="ex-metric"><span class="mlbl">Faithful.</span><span class="mval zero">0.0</span></div>
+          <div class="ex-metric"><span class="mlbl">Recall</span><span class="mval high">1.0</span></div>
+        </div>
+        <div class="example-note">100% of the needed evidence retrieved (Recall = 1.0). Scored 0.0 anyway — the judge wouldn't accept "prevented a flameout" as entailed by a source stating combustion "will restart automatically," a legitimate paraphrase rejected on strict literalism.</div>
+      </div>
+
+      <h3 style="font-size:17px;margin-top:36px;">The refusal-artifact bug</h3>
+      <p>RAGAS scores a refusal as trivially faithful — no claims made, none can be unfaithful. On items where naive RAG refused, that artificial ~1.0 beat GraphRAG's real, cited answer. <code class="mono" style="font-size:13px;">build_router_ground_truth.py</code>'s own header names AF03 as one of the two cases that surfaced this.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L32" target="_blank" rel="noopener noreferrer">[T10]<span class="sr-only">(opens sourcing note on GitHub)</span></a></sup></p>
+
+      <div class="refusal-pair">
+        <div class="rp-cell">
+          <div class="rp-head">
+            <span class="rp-sys">NAIVE RAG</span>
+            <span class="rp-faith high">1.0<span class="rp-faith-lbl">FAITHFULNESS</span></span>
+          </div>
+          <p class="rp-ans">"The provided context does not contain information on the root causes that can result in an engine flameout."<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/naive_rag_ragas_inputs.json#L755" target="_blank" rel="noopener noreferrer">[T6]</a></sup><sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/naive_rag/aeroops_naive_rag_ragas_results.json#L803" target="_blank" rel="noopener noreferrer">[T7]</a></sup></p>
+        </div>
+        <div class="rp-cell win">
+          <div class="rp-head">
+            <span class="rp-sys">GRAPHRAG</span>
+            <span class="rp-faith zero">0.0<span class="rp-faith-lbl">FAITHFULNESS</span></span>
+          </div>
+          <p class="rp-ans">"The graph identifies three distinct root causes that can lead to an engine flameout: fuel starvation or interruption [D3_c08], compressor surge or stall [D3_c09], fuel filter clogging [D3_c30]."<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/graphrag_ragas_inputs.json#L2654" target="_blank" rel="noopener noreferrer">[T4]</a></sup><sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/graphrag/aeroops_graphrag_ragas_results.json#L2702" target="_blank" rel="noopener noreferrer">[T5]</a></sup></p>
+        </div>
+      </div>
+      <div class="callout">A refusal scored higher than a substantively correct, cited answer. Fixed in <code class="mono" style="font-size:12.5px;">router_ground_truth.json</code>'s labeling logic — if exactly one backend refuses, the other wins outright, RAGAS isn't consulted for that item. 9 of 45 labels flipped.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L32" target="_blank" rel="noopener noreferrer">[T10]</a></sup></div>
+    </section>
+
+    <!-- T3: THE AGENTIC DETOUR -->
+    <section id="t3">
+      <div class="section-head"><h2>The Agentic Detour</h2><span class="section-tag">5 ROUNDS · A REASONABLE DECISION AT THE TIME</span></div>
+      <p class="lede">The router's original target said naive won specific categories outright. Building a router in response was the right call given that evidence — the mistake would have been never revisiting it once better evidence arrived.</p>
+
+      <div class="linechart-wrap">
+        <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Router accuracy across 5 rounds: 60%, 51.3%, 56.4%, 85%, 87.5%">
+          <!-- axes -->
+          <line x1="50" y1="20" x2="50" y2="200" stroke="#DCD5C4"/>
+          <line x1="50" y1="200" x2="690" y2="200" stroke="#DCD5C4"/>
+          <text x="8" y="24" font-family="IBM Plex Mono" font-size="10" fill="#3D4A52">100%</text>
+          <text x="8" y="114" font-family="IBM Plex Mono" font-size="10" fill="#3D4A52">50%</text>
+          <text x="18" y="204" font-family="IBM Plex Mono" font-size="10" fill="#3D4A52">0%</text>
+          <!-- gridline at 50 -->
+          <line x1="50" y1="110" x2="690" y2="110" stroke="#DCD5C4" stroke-dasharray="2,3"/>
+          <!--
+            y = 200 - (accuracy% * 1.8)   [180px tall plot area, 20-200]
+            R1 60 -> 92 | R2 51.3 -> 107.66 | R3 56.4 -> 98.48 | R4 85 -> 47 | R5 87.5 -> 42.5
+            x: 5 points evenly spaced 130..610
+          -->
+          <polyline points="130,92 260,107.66 390,98.48 520,47 610,42.5" fill="none" stroke="#3D4A52" stroke-width="1.6"/>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <circle cx="130" cy="92" r="4.5" fill="#3D4A52"/>
+            <circle cx="260" cy="107.66" r="4.5" fill="#3D4A52"/>
+            <circle cx="390" cy="98.48" r="4.5" fill="#3D4A52"/>
+            <circle cx="520" cy="47" r="4.5" fill="#8A6510"/>
+            <circle cx="610" cy="42.5" r="5.5" fill="#C4941F" stroke="#1A1D1F" stroke-width="1"/>
+            <text x="130" y="78" text-anchor="middle" fill="#1A1D1F">60%</text>
+            <text x="260" y="124" text-anchor="middle" fill="#1A1D1F">51.3%</text>
+            <text x="390" y="115" text-anchor="middle" fill="#1A1D1F">56.4%</text>
+            <text x="520" y="33" text-anchor="middle" fill="#1A1D1F">85%</text>
+            <text x="610" y="60" text-anchor="middle" fill="#8A6510" font-weight="500">87.5%</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="9.5" fill="#3D4A52">
+            <text x="130" y="220" text-anchor="middle">Round 1</text>
+            <text x="130" y="233" text-anchor="middle">embedding-centroid</text>
+            <text x="260" y="220" text-anchor="middle">Round 2</text>
+            <text x="260" y="233" text-anchor="middle">entity-count</text>
+            <text x="390" y="220" text-anchor="middle">Round 3</text>
+            <text x="390" y="233" text-anchor="middle">keyword-pattern</text>
+            <text x="520" y="220" text-anchor="middle">Round 4</text>
+            <text x="520" y="233" text-anchor="middle">3-layer + refusal fix</text>
+            <text x="610" y="220" text-anchor="middle">Round 5</text>
+            <text x="610" y="233" text-anchor="middle">pattern + default</text>
+          </g>
+        </svg>
+        <div class="callout breakin" style="top:20px;right:24px;">Built on a target later shown to be unreliable — see §T2.</div>
+        <div class="cap">Backend accuracy against <code class="mono" style="font-size:11px;">router_ground_truth.json</code>, by router design round.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L62" target="_blank" rel="noopener noreferrer">[T11]<span class="sr-only">(opens sourcing note on GitHub)</span></a></sup></div>
+      </div>
+
+      <p style="margin-top:20px;">Round 2's entity count was diagnosed as an alias-inflation artifact of <code class="mono" style="font-size:13px;">ENTITY_MAP</code>, not a real property of the question. Round 3's comparison-language rule was 4/4 wrong as a standalone signal. Round 4 gained 10.6 points purely from fixing the refusal-artifact bug in the ground truth itself (§T2) — not from a better router. Round 5 dropped the semantic layer entirely after it returned a confident-looking match at similarity 0.07–0.19 on out-of-domain junk queries.</p>
+
+      <div class="callout limit">The 87.5% figure was scored against a target itself built from RAGAS Faithfulness/Context Recall comparisons — the same metric shown in §T2 to swing 0.667 points on identical input. A real number describing real router behavior against that specific target, measured before the target's own reliability had been independently stress-tested.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L76" target="_blank" rel="noopener noreferrer">[T12]<span class="sr-only">(opens sourcing note on GitHub)</span></a></sup></div>
+    </section>
+
+    <!-- T4: THE JURY HARNESS -->
+    <section id="t4">
+      <div class="section-head"><h2>The Jury Harness</h2><span class="section-tag">BLINDED · 3-MODEL MAJORITY VOTE · ANSWER QUALITY ONLY</span></div>
+      <p class="lede">A panel of independent judges scoring by majority vote — the same principle behind "Panel of LLM evaluators" (PoLL) in evaluation literature<sup class="cite" style="opacity:.75;">†</sup> — reused this project's own established method: the gold set's <code class="mono" style="font-size:13px;">jury_agreement</code> field was itself built by 3-model majority vote (Opus 5, GPT-5.6, Qwen), reprised here to score naive/GraphRAG/agentic's answers, blinded, answer-quality only.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/jury_scoring/PROMPT.md" target="_blank" rel="noopener noreferrer">[T16]<span class="sr-only">(opens the jury prompt on GitHub)</span></a></sup></p>
+
+      <div class="metric-grid-3">
+        <div class="metric-card"><div class="big">0.511</div><div class="lbl">naive — correct rate, 23/45</div></div>
+        <div class="metric-card"><div class="big graph">0.867</div><div class="lbl">graphrag — correct rate, 39/45</div></div>
+        <div class="metric-card"><div class="big graph">0.867</div><div class="lbl">agentic — correct rate, 39/45<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/jury_scoring/aggregated_jury_scores.json#L2" target="_blank" rel="noopener noreferrer">[T13]<span class="sr-only">(opens jury results on GitHub)</span></a></sup></div></div>
+      </div>
+
+      <h3 style="font-size:17px;margin-top:32px;">Every category, naive vs. GraphRAG</h3>
+      <div class="pairchart">
+        <div class="pairchart-legend"><span><i class="naive"></i>Naive RAG</span><span><i class="combined"></i>GraphRAG = Agentic</span></div>
+        <div id="jury-pairchart-body"></div>
+      </div>
+      <div class="cap" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);">GraphRAG and agentic are identical on all 7 categories — rendered as one bar, not two, since there's no real difference to show.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/jury_scoring/aggregated_jury_scores.json#L22" target="_blank" rel="noopener noreferrer">[T14]<span class="sr-only">(opens per-category results on GitHub)</span></a></sup></div>
+
+      <div class="tie-callout">
+        <div><div class="tie-num">n=2</div><div class="tie-num-lbl">DA04 · DA05</div></div>
+        <div class="tie-txt">The only 2 of 45 items the router ever actually diverted to naive. On exactly those 2 — the only items where the router's decision was ever load-bearing — <b>naive's correct rate = 0.5, GraphRAG's correct rate = 0.5. An exact tie.</b> This is the number that carries the "not worth it" conclusion, not the aggregate.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/jury_scoring/aggregated_jury_scores.json#L164" target="_blank" rel="noopener noreferrer">[T15]<span class="sr-only">(opens the routed-items comparison on GitHub)</span></a></sup></div>
+      </div>
+
+      <p style="font-size:14.5px;color:var(--steel);">n=2 is small enough that a coin flip wouldn't be surprising as noise on its own — but it isn't contradicted by the larger sample, it's corroborated: naive's overall 0.511 vs. GraphRAG's 0.867 holds across all 45 items, not just the 2 the router sent its way.</p>
+    </section>
+
+    <!-- T5: NET RESULT -->
+    <section id="t5">
+      <div class="section-head"><h2>Net Result</h2><span class="section-tag">DECISION RECORD</span></div>
+      <div class="headline-box">
+        <p style="margin:0;font-size:15.5px;">Naive RAG and the agentic router are gone from the live system. Three router designs were built, measured, and discarded in sequence as better evidence arrived — not reversed on a hunch. What's left is a single GraphRAG pipeline, verified end-to-end on infrastructure this project fully owns, with real per-query cost and latency pulled from an actual production run, not estimated.<sup class="cite"><a class="cite" href="https://github.com/palakpwl07/AeroOps/blob/main/evaluation/final_system_architecture_brief.md#L173" target="_blank" rel="noopener noreferrer">[T23]<span class="sr-only">(opens Net Result sourcing on GitHub)</span></a></sup></p>
+      </div>
+    </section>
+
+    <footer>
+      AeroOps · Final Architecture · GraphRAG-only, self-hosted, cited to source.
+    </footer>
+  </main>
+</div>
+
+<script>
+// ---- scroll spy ----
+const links = document.querySelectorAll('#rail2 a');
+const sections = Array.from(links).map(l => document.querySelector(l.getAttribute('href')));
+function onScroll(){
+  let idx = 0;
+  const y = window.scrollY + 140;
+  sections.forEach((s,i)=>{ if(s && s.offsetTop <= y) idx = i; });
+  links.forEach(l=>l.classList.remove('active'));
+  if(links[idx]) links[idx].classList.add('active');
+}
+window.addEventListener('scroll', onScroll);
+onScroll();
+
+// ---- Tab 2 s3: jury paired chart (graphrag=agentic rendered as ONE bar) ----
+// [category, naive, graphrag_and_agentic] -- graphrag and agentic are
+// identical on every category (the router only ever diverted 2 of 45
+// items, both aggregation_fanout), so showing two overlapping bars would
+// imply a difference that isn't there.
+const juryData = [
+  ['factual_single_hop', 0.833, 1.000],
+  ['multi_hop_causal', 0.750, 0.875],
+  ['aggregation_fanout', 0.500, 0.833],
+  ['operational_scenario', 0.625, 1.000],
+  ['provenance', 0.667, 1.000],
+  ['disambiguation', 0.167, 0.667],
+  ['cross_document', 0.125, 0.750],
+];
+const juryBody = document.getElementById('jury-pairchart-body');
+if(juryBody){
+  juryData.forEach(([cat,n,g])=>{
+    const row = document.createElement('div');
+    row.className = 'pc-row';
+    row.setAttribute('role','group');
+    row.setAttribute('aria-label', `${cat}: Naive ${n.toFixed(3)}, GraphRAG equals Agentic ${g.toFixed(3)}`);
+    row.innerHTML = `
+      <span class="pc-label">${cat}</span>
+      <div class="pc-bars">
+        <div class="pc-row-label-row"><span>Naive</span><span>${n.toFixed(3)}</span></div>
+        <div class="pc-bar-track"><div class="pc-bar-fill naive" style="width:${Math.max(n*100,14)}%;"><span class="fillval">${n.toFixed(3)}</span></div></div>
+        <div class="pc-row-label-row" style="margin-top:4px;"><span>GraphRAG = Agentic</span><span>${g.toFixed(3)}</span></div>
+        <div class="pc-bar-track"><div class="pc-bar-fill combined" style="width:${Math.max(g*100,14)}%;"><span class="fillval">${g.toFixed(3)}</span></div></div>
+      </div>`;
+    juryBody.appendChild(row);
+  });
+}
+</script>
+</body></html>
